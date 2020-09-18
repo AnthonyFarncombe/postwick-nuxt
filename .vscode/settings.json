@@ -1,0 +1,11 @@
+{
+    "cSpell.words": [
+        "nuxt",
+        "nuxtjs",
+        "postwick",
+        "vuetify"
+    ],
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "files.eol": "\n"
+}
