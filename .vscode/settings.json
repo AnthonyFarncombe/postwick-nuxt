@@ -3,6 +3,7 @@
         "nuxt",
         "nuxtjs",
         "postwick",
+        "vuelidate",
         "vuetify"
     ],
     "editor.formatOnSave": true,
