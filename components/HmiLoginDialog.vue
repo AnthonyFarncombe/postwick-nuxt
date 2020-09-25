@@ -6,13 +6,14 @@
 
     <v-card>
       <v-card-text>
-        <pre>{{ users }}</pre>
         <v-container>
           <v-row>
             <v-col>
               <v-select
-                v-model="username"
-                :items="['Anthony Farncombe', 'Tim Percival']"
+                v-model="user"
+                :items="users"
+                item-text="name"
+                return-object
                 label="User"
               />
             </v-col>
@@ -57,9 +58,9 @@
               </v-btn>
               <v-btn @click="password += '0'">0</v-btn>
               <v-btn
-                :disabled="!username || password.length < 4"
+                :disabled="!user || password.length < 4"
                 :loading="loggingIn"
-                @click="confirm"
+                @click="submit"
               >
                 <v-icon>mdi-check</v-icon>
               </v-btn>
@@ -73,36 +74,40 @@
 
 <script>
 export default {
-  async asyncData({ $axios }) {
-    try {
-      const users = await $axios.$get('users')
-      // eslint-disable-next-line no-console
-      console.log(users)
-      return { users }
-    } catch (err) {
-      return { users: [] }
-    }
-  },
   data: () => ({
+    users: [],
     dialog: false,
-    username: null,
+    user: null,
     password: '',
     loggingIn: false,
   }),
+  async created() {
+    try {
+      this.users = await this.$axios.$get('auth/users')
+    } catch (err) {}
+  },
   methods: {
     numberClick(num) {
       this.password += num
     },
-    confirm() {
-      this.loggingIn = true
-      setTimeout(() => {
-        this.$store.commit('setAuthUser', {
-          firstName: this.username,
-          roles: ['users'],
+    async submit() {
+      try {
+        this.loggingIn = true
+
+        await this.$store.dispatch('login', {
+          email: this.user.email,
+          password: this.password,
+          hmi: true,
         })
+
+        await this.$store.dispatch('loadAuthUser')
+
         this.dialog = false
+      } catch (err) {
+        this.password = ''
+      } finally {
         this.loggingIn = false
-      }, 1500)
+      }
     },
   },
 }

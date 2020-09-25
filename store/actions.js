@@ -7,11 +7,9 @@ const actions = {
     context.commit('setAuthUser', authUser)
   },
   async login(_context, payload) {
-    try {
-      const response = await this.$axios.$post('auth/authenticate', payload)
-      localStorage.setItem('jwtToken', response.jwtToken)
-      localStorage.setItem('refreshToken', response.refreshToken)
-    } catch (err) {}
+    const response = await this.$axios.$post('auth/login', payload)
+    localStorage.setItem('jwtToken', response.jwtToken)
+    localStorage.setItem('refreshToken', response.refreshToken)
   },
   logout(context) {
     localStorage.removeItem('jwtToken')

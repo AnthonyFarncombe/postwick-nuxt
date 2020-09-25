@@ -1,46 +1,63 @@
 <template>
   <v-app dark>
-    <v-navigation-drawer v-model="drawer" :clipped="true" fixed app>
-      <v-list rounded>
-        <v-list-item
-          v-for="(item, i) in items"
-          :key="i"
-          :to="item.to"
-          router
-          exact
+    <template v-if="connected">
+      <v-navigation-drawer v-model="drawer" :clipped="true" fixed app>
+        <v-list rounded>
+          <v-list-item
+            v-for="(page, i) in pages"
+            :key="i"
+            :to="page.to"
+            router
+            exact
+          >
+            <v-list-item-action>
+              <v-icon>{{ page.icon }}</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title v-text="page.title" />
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+      <v-app-bar :clipped-left="true" fixed app>
+        <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
+        <v-toolbar-title>Postwick BMS</v-toolbar-title>
+        <v-spacer />
+        <v-toolbar-title v-if="authUser && authUser.id" class="mr-5">
+          Hi {{ authUser.firstName }}!
+        </v-toolbar-title>
+        <v-btn v-if="authUser && authUser.id" color="secondary" @click="logout"
+          >Logout</v-btn
         >
-          <v-list-item-action>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title v-text="item.title" />
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-    <v-app-bar :clipped-left="true" fixed app>
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
-      <v-toolbar-title>Postwick BMS</v-toolbar-title>
-      <v-spacer />
-      <v-toolbar-title v-if="authUser" class="mr-5"
-        >Hi {{ authUser.firstName }}!</v-toolbar-title
-      >
-      <v-btn v-if="authUser" color="secondary" @click="logout">Logout</v-btn>
-      <!-- <v-btn v-if="!authUser" @click="login">Login</v-btn> -->
-      <HmiLoginDialog v-if="!authUser" />
-    </v-app-bar>
-    <v-main>
-      <v-container>
-        <nuxt />
-      </v-container>
-    </v-main>
-    <v-footer app>
-      <span>&copy; {{ new Date().getFullYear() }} NCH Construction Ltd</span>
-    </v-footer>
+        <HmiLoginDialog v-if="!authUser || !authUser.id" />
+      </v-app-bar>
+      <v-main>
+        <v-container>
+          <nuxt />
+        </v-container>
+      </v-main>
+      <v-footer app>
+        <span>&copy; {{ new Date().getFullYear() }} NCH Construction Ltd</span>
+      </v-footer>
+    </template>
+    <v-container v-else style="height: 400px">
+      <v-row class="fill-height" align-content="center" justify="center">
+        <v-col class="subtitle-1 text-center" cols="12"> Connecting... </v-col>
+        <v-col cols="6">
+          <v-progress-linear
+            color="deep-purple accent-4"
+            indeterminate
+            rounded
+            height="6"
+          ></v-progress-linear>
+        </v-col>
+      </v-row>
+    </v-container>
   </v-app>
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import HmiLoginDialog from '@/components/HmiLoginDialog'
 
 export default {
@@ -52,11 +69,9 @@ export default {
     drawer: true,
   }),
   computed: {
-    authUser() {
-      return this.$store.state.authUser
-    },
-    items() {
-      const items = [
+    ...mapState(['authUser', 'connected']),
+    pages() {
+      const pages = [
         {
           icon: 'mdi-view-dashboard',
           title: 'Dashboard',
@@ -94,7 +109,7 @@ export default {
           role: 'users',
         },
       ]
-      return items.filter(
+      return pages.filter(
         (i) =>
           !i.role ||
           ((this.authUser && this.authUser.roles) || []).includes(i.role)
@@ -102,22 +117,16 @@ export default {
     },
   },
   created() {
-    // eslint-disable-next-line no-console
-    console.log('HMI loaded')
+    this.$store.commit('setHmiActive', true)
   },
   beforeDestroy() {
-    // eslint-disable-next-line no-console
-    console.log('HMI unloaded')
+    this.$store.commit('setHmiActive', false)
   },
   methods: {
-    login() {
-      this.$store.commit('setAuthUser', {
-        firstName: 'Anthony',
-        roles: ['users'],
-      })
-    },
     logout() {
-      this.$store.commit('setAuthUser', false)
+      this.$store.dispatch('logout')
+      const page = this.pages.find((p) => p.to === this.$route.fullPath)
+      if (!page) this.$router.push('/hmi')
     },
   },
 }

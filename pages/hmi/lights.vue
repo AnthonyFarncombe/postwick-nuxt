@@ -58,5 +58,8 @@ export default {
   head: {
     title: 'Lights',
   },
+  meta: {
+    test: 'lights',
+  },
 }
 </script>

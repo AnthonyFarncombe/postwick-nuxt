@@ -1,5 +1,6 @@
 export default () => ({
-  authUser: false,
+  authUser: null,
+  hmiActive: false,
   connected: false,
   authenticated: false,
   variables: [],

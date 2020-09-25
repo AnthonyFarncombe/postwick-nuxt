@@ -6,7 +6,7 @@ export default function ({ $axios, redirect }) {
       err &&
       err.response &&
       err.response.status === 401 &&
-      originalRequest.url !== 'auth/refresh'
+      !originalRequest.url.startsWith('auth')
     ) {
       const jwtToken = localStorage.getItem('jwtToken')
       const refreshToken = localStorage.getItem('refreshToken')

@@ -5,7 +5,7 @@
         <nuxt />
       </v-container>
     </v-main>
-    <v-footer :absolute="!fixed" app>
+    <v-footer app>
       <span>&copy; {{ new Date().getFullYear() }} NCH Construction Ltd</span>
     </v-footer>
   </v-app>
