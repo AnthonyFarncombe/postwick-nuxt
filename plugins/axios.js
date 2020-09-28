@@ -1,4 +1,4 @@
-export default function ({ $axios, redirect }) {
+export default function ({ $axios, redirect, route }) {
   $axios.onResponseError((err) => {
     const originalRequest = err.config
 
@@ -6,10 +6,16 @@ export default function ({ $axios, redirect }) {
       err &&
       err.response &&
       err.response.status === 401 &&
-      !originalRequest.url.startsWith('auth')
+      (originalRequest.url === 'auth/me' ||
+        !originalRequest.url.startsWith('auth'))
     ) {
       const jwtToken = localStorage.getItem('jwtToken')
       const refreshToken = localStorage.getItem('refreshToken')
+
+      if (!refreshToken) {
+        localStorage.removeItem('jwtToken')
+        return redirect('/auth/login?redirect=' + encodeURI(route.path))
+      }
 
       return $axios
         .$post('auth/refresh', {
@@ -30,7 +36,7 @@ export default function ({ $axios, redirect }) {
           if (err && err.response.status === 401) {
             localStorage.removeItem('jwtToken')
             localStorage.removeItem('refreshToken')
-            return redirect('/auth/login')
+            return redirect('/auth/login?redirect=' + encodeURI(route.path))
           } else {
             return err
           }

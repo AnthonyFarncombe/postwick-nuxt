@@ -34,11 +34,27 @@
                   label="Email"
                 />
               </v-flex>
+              <v-flex xs12 sm6>
+                <v-text-field
+                  v-model="$v.editedUser.hmiPin.$model"
+                  :error-messages="hmiPinErrors"
+                  label="HMI PIN"
+                />
+              </v-flex>
               <v-flex xs12>
                 <v-select
                   v-model="editedUser.roles"
                   label="Roles"
                   :items="roles"
+                  multiple
+                  chips
+                ></v-select>
+              </v-flex>
+              <v-flex xs12>
+                <v-select
+                  v-model="editedUser.notifications"
+                  label="Notifications"
+                  :items="notifications"
                   multiple
                   chips
                 ></v-select>
@@ -75,15 +91,20 @@
 </template>
 
 <script>
-import { required, email } from 'vuelidate/lib/validators'
+import { required, email, numeric, minLength } from 'vuelidate/lib/validators'
 
 export default {
   layout: 'hmi',
   asyncData({ $axios }) {
     return Promise.all([
       $axios.$get('users/roles'),
+      $axios.$get('users/notifications'),
       $axios.$get('users'),
-    ]).then((results) => ({ roles: results[0], users: results[1] }))
+    ]).then((results) => ({
+      roles: results[0],
+      notifications: results[1],
+      users: results[2],
+    }))
   },
   data: () => ({
     headers: [
@@ -98,14 +119,18 @@ export default {
       firstName: '',
       lastName: '',
       email: '',
+      hmiPin: '',
       roles: [],
+      notifications: [],
     },
     defaultUser: {
       id: '',
       firstName: '',
       lastName: '',
       email: '',
+      hmiPin: '',
       roles: [],
+      notifications: [],
     },
   }),
   computed: {
@@ -141,10 +166,21 @@ export default {
         errors.push('A valid email address is required')
       return errors
     },
+    hmiPinErrors() {
+      const errors = []
+      if (!this.$v.editedUser.hmiPin.$dirty) return errors
+      if (!this.$v.editedUser.hmiPin.required)
+        errors.push('HMI PIN is required')
+      if (!this.$v.editedUser.hmiPin.minLength)
+        errors.push('HMI PIN must be at least 4 digits')
+      return errors
+    },
     formValid() {
       return (
         !this.$v.editedUser.firstName.$invalid &&
         !this.$v.editedUser.lastName.$invalid &&
+        !this.$v.editedUser.email.$invalid &&
+        !this.$v.editedUser.hmiPin.$invalid &&
         !this.$v.editedUser.$invalid
       )
     },
@@ -204,6 +240,11 @@ export default {
       email: {
         required,
         email,
+      },
+      hmiPin: {
+        required,
+        numeric,
+        minLength: minLength(4),
       },
     },
   },

@@ -30,10 +30,13 @@
         <v-card-actions>
           <nuxt-link to="/auth/forgot">Forgot password?</nuxt-link>
           <div class="flex-grow-1"></div>
-          <v-btn color="primary" :disabled="$v.$invalid" @click="submit">
-            Login
-            <v-progress-circular v-if="loggingIn" indeterminate />
-          </v-btn>
+          <v-btn
+            color="primary"
+            :disabled="$v.$invalid"
+            :loading="loggingIn"
+            @click="submit"
+            >Login</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-col>
@@ -73,9 +76,11 @@ export default {
           password: this.password,
         })
 
-        if (this.$route.query && this.$route.query.redirect)
+        if (this.$route.query && this.$route.query.redirect) {
           this.$router.push(this.$route.query.redirect)
-        else this.$router.push('/')
+        } else {
+          this.$router.push('/')
+        }
       } catch (err) {
         this.password = ''
       }

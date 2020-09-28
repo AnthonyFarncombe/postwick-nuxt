@@ -41,6 +41,9 @@
           </template>
         </v-simple-table>
       </v-col>
+      <v-col sm="12" md="8" lg="6" xl="6">
+        <v-card> North Sliding Doors </v-card>
+      </v-col>
     </v-row>
   </v-container>
 </template>
