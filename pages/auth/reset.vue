@@ -92,7 +92,7 @@ export default {
     async submit() {
       this.resetting = true
       try {
-        await this.$axios.$post('api/auth/reset', {
+        await this.$axios.$post('auth/reset', {
           email: this.email,
           password: this.password,
           token: this.$route.query.token,

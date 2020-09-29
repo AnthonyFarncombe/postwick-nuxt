@@ -69,7 +69,7 @@ export default {
             window.location.href.indexOf(this.$route.fullPath)
           ) + '/auth/reset?token={{token}}'
 
-        await this.$axios.$post('api/auth/forgot', {
+        await this.$axios.$post('auth/forgot', {
           email: this.email,
           url: resetUrl,
         })
