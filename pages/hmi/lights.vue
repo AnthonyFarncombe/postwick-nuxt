@@ -6,7 +6,30 @@
           <template v-slot:default>
             <tbody>
               <tr
-                v-for="light in lights"
+                v-for="light in insideLights"
+                :key="light.name"
+                :class="lightClass(light)"
+              >
+                <td class="text-left">
+                  <span class="title">{{ light.text }}</span>
+                </td>
+                <td class="text-right">
+                  <v-btn class="default mx-4" @click="toggle(light)"
+                    >Toggle</v-btn
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </v-col>
+
+      <v-col sm="12" md="8" lg="6" xl="6">
+        <v-simple-table>
+          <template v-slot:default>
+            <tbody>
+              <tr
+                v-for="light in outsideLights"
                 :key="light.name"
                 :class="lightClass(light)"
               >
@@ -31,9 +54,14 @@
 export default {
   layout: 'hmi',
   computed: {
-    lights() {
+    insideLights() {
       return this.$store.state.variables.filter(
-        (v) => v.group === 'lights' && /.+Status$/.test(v.name)
+        (v) => v.group === 'insideLights' && /.+Status$/.test(v.name)
+      )
+    },
+    outsideLights() {
+      return this.$store.state.variables.filter(
+        (v) => v.group === 'outsideLights' && /.+Status$/.test(v.name)
       )
     },
   },

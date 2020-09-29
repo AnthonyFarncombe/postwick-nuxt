@@ -16,6 +16,9 @@ const actions = {
     localStorage.removeItem('refreshToken')
     context.commit('setAuthUser', null)
   },
+  setVariableValue(_context, payload) {
+    this.$socket.setVariableValue(payload)
+  },
 }
 
 export default actions

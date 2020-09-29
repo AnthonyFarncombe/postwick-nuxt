@@ -1,6 +1,6 @@
 import io from 'socket.io-client'
 
-export default function ({ store }) {
+export default function ({ store }, inject) {
   const socket = io(
     process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3011',
     { autoConnect: false }
@@ -21,15 +21,20 @@ export default function ({ store }) {
     // eslint-disable-next-line no-console
     console.log('socket.io connected')
 
-    store.commit('setConnectionState', true)
-
-    socket.emit('getVariables', {}, (variables) =>
-      store.commit('setVariables', variables)
-    )
-
-    socket.emit('getSchedules', {}, (schedules) =>
-      store.commit('setSchedules', schedules)
-    )
+    Promise.all([
+      new Promise((resolve) =>
+        socket.emit('getVariables', {}, (variables) => {
+          store.commit('setVariables', variables)
+          resolve()
+        })
+      ),
+      new Promise((resolve) =>
+        socket.emit('getSchedules', {}, (schedules) => {
+          store.commit('setSchedules', schedules)
+          resolve()
+        })
+      ),
+    ]).then(() => store.commit('setConnectionState', true))
   })
 
   socket.on('variableValueUpdated', (variable) =>
@@ -44,5 +49,13 @@ export default function ({ store }) {
     // eslint-disable-next-line no-console
     console.log('socket.io disconnected')
     store.commit('setConnectionState', false)
+  })
+
+  inject('socket', {
+    socket,
+    setVariableValue({ name, value }) {
+      if (!socket.connected) return
+      socket.emit('setVariableValue', { name, value })
+    },
   })
 }
