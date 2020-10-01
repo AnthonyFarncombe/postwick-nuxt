@@ -132,7 +132,9 @@ export default {
           if (!page) this.$router.push('/hmi')
         })
         .catch(() => {
-          this.$router.push('/auth/login')
+          this.$router.push(
+            '/auth/login?redirect=' + encodeURI(this.$route.fullPath)
+          )
         })
     },
   },
