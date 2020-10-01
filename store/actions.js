@@ -5,6 +5,7 @@ const actions = {
     }
     const authUser = await this.$axios.$get('auth/me')
     context.commit('setAuthUser', authUser)
+    return authUser
   },
   async login(_context, payload) {
     const response = await this.$axios.$post('auth/login', payload)
@@ -14,6 +15,7 @@ const actions = {
   logout(context) {
     localStorage.removeItem('jwtToken')
     localStorage.removeItem('refreshToken')
+    this.$axios.setToken(null, 'bearer')
     context.commit('setAuthUser', null)
   },
   setVariableValue(_context, payload) {

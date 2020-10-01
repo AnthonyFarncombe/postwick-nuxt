@@ -125,8 +125,15 @@ export default {
   methods: {
     logout() {
       this.$store.dispatch('logout')
-      const page = this.pages.find((p) => p.to === this.$route.fullPath)
-      if (!page) this.$router.push('/hmi')
+      this.$store
+        .dispatch('loadAuthUser')
+        .then((authUser) => {
+          const page = this.pages.find((p) => p.to === this.$route.fullPath)
+          if (!page) this.$router.push('/hmi')
+        })
+        .catch(() => {
+          this.$router.push('/auth/login')
+        })
     },
   },
 }
