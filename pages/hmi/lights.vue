@@ -14,9 +14,9 @@
                   <span class="title">{{ light.text }}</span>
                 </td>
                 <td class="text-right">
-                  <v-btn class="default mx-4" @click="toggle(light)"
-                    >Toggle</v-btn
-                  >
+                  <v-btn class="default mx-4" @click="toggle(light)">
+                    {{ toggleText(light) }}
+                  </v-btn>
                 </td>
               </tr>
             </tbody>
@@ -37,9 +37,9 @@
                   <span class="title">{{ light.text }}</span>
                 </td>
                 <td class="text-right">
-                  <v-btn class="default mx-4" @click="toggle(light)"
-                    >Toggle</v-btn
-                  >
+                  <v-btn class="default mx-4" @click="toggle(light)">
+                    {{ toggleText(light) }}
+                  </v-btn>
                 </td>
               </tr>
             </tbody>
@@ -74,6 +74,16 @@ export default {
           return 'green'
         default:
           return 'red'
+      }
+    },
+    toggleText(light) {
+      switch (light.value) {
+        case 3:
+          return 'Cancel Phase Out'
+        case 1:
+          return 'Turn Off'
+        default:
+          return 'Turn On'
       }
     },
     toggle(light) {

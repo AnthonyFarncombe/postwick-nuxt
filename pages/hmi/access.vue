@@ -46,19 +46,6 @@
         <v-simple-table>
           <template v-slot:default>
             <tbody>
-              <tr :class="doorSystemEnabled.value ? 'green' : 'red'">
-                <td class="text-left">
-                  <span class="title"
-                    >Door System
-                    {{ doorSystemEnabled.value ? 'Enabled' : 'Disabled' }}</span
-                  >
-                </td>
-                <td class="text-right">
-                  <v-btn @click="toggleDoorSystemEnable">{{
-                    doorSystemEnabled.value ? 'Disable' : 'Enable'
-                  }}</v-btn>
-                </td>
-              </tr>
               <tr :class="gateColor">
                 <td class="text-left">
                   <span class="title">{{ gateText }}</span>
@@ -83,10 +70,79 @@
                   >
                 </td>
               </tr>
+
+              <tr :class="doorSystemEnabled.value ? 'green' : 'red'">
+                <td class="text-left">
+                  <span class="title"
+                    >Door System
+                    {{ doorSystemEnabled.value ? 'Enabled' : 'Disabled' }}</span
+                  >
+                </td>
+                <td class="text-right">
+                  <v-btn @click="toggleDoorSystemEnable">{{
+                    doorSystemEnabled.value ? 'Disable' : 'Enable'
+                  }}</v-btn>
+                </td>
+              </tr>
+
+              <tr :class="northFoyerLocked.value ? 'red' : 'green'">
+                <td class="text-left">
+                  <span class="title"
+                    >North Foyer
+                    {{ northFoyerLocked.value ? 'Locked' : 'Unlocked' }}</span
+                  >
+                </td>
+                <td class="text-right">
+                  <v-btn @click="toggleNorthFoyerLocked">{{
+                    northFoyerLocked.value ? 'Unlock' : 'Lock'
+                  }}</v-btn>
+                </td>
+              </tr>
             </tbody>
           </template>
         </v-simple-table>
       </v-col>
+    </v-row>
+
+    <v-row>
+      <v-simple-table>
+        <template v-slot:default>
+          <thead>
+            <tr>
+              <th>Door</th>
+              <th>Maglock</th>
+              <th>Lock Proof</th>
+              <th>Sensor</th>
+              <th>Break Glass</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="door in doors" :key="door.name">
+              <td>{{ door.text }} ({{ door.value }})</td>
+              <td>
+                <span v-if="(door.value & 0x200) > 0">{{
+                  (door.value & 0x4) > 0 ? 'Energised' : 'Released'
+                }}</span>
+              </td>
+              <td>
+                <span v-if="(door.value & 0x400) > 0">{{
+                  (door.value & 0x8) > 0 ? 'Pending' : 'Locked'
+                }}</span>
+              </td>
+              <td>
+                <span v-if="(door.value & 0x800) > 0">{{
+                  (door.value & 0x10) > 0 ? 'Closed' : 'Open'
+                }}</span>
+              </td>
+              <td>
+                <span v-if="(door.value & 0x1000) > 0">{{
+                  (door.value & 0x20) > 0 ? 'Healthy' : 'Broken'
+                }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </template>
+      </v-simple-table>
     </v-row>
   </v-container>
 </template>
@@ -94,43 +150,17 @@
 <script>
 export default {
   layout: 'hmi',
-  asyncData({ store }) {
-    const securityAlarmEnabled =
-      store.state.variables.find((v) => v.name === 'securityAlarmEnabled') || {}
-
-    const securityAlarmTriggered =
-      store.state.variables.find((v) => v.name === 'securityAlarmTriggered') ||
-      {}
-
-    const fireAlarmTriggered =
-      store.state.variables.find((v) => v.name === 'fireAlarmTriggered') || {}
-
-    const doorSystemEnabled = store.state.variables.find(
-      (v) => v.name === 'doorSystemEnabled'
-    ) || { value: false }
-
-    const gateClosed = store.state.variables.find(
-      (v) => v.name === 'gateClosed'
-    ) || { value: false }
-
-    const gateMoving = store.state.variables.find(
-      (v) => v.name === 'gateMoving'
-    ) || { value: false }
-
-    const gateHeldOpen = store.state.variables.find(
-      (v) => v.name === 'gateHeldOpen'
-    ) || { value: false }
-
-    return {
-      securityAlarmEnabled,
-      securityAlarmTriggered,
-      fireAlarmTriggered,
-      doorSystemEnabled,
-      gateClosed,
-      gateMoving,
-      gateHeldOpen,
-    }
-  },
+  data: () => ({
+    securityAlarmEnabled: { value: false },
+    securityAlarmTriggered: { value: false },
+    fireAlarmTriggered: { value: false },
+    gateClosed: { value: false },
+    gateMoving: { value: false },
+    gateHeldOpen: { value: false },
+    doorSystemEnabled: { value: false },
+    northFoyerLocked: { value: false },
+    doors: [],
+  }),
   computed: {
     gateColor() {
       return this.gateMoving.value
@@ -154,13 +184,42 @@ export default {
       )
     },
   },
+  created() {
+    this.securityAlarmEnabled = this.$store.state.variables.find(
+      (v) => v.name === 'securityAlarmEnabled'
+    ) || { value: false }
+
+    this.securityAlarmTriggered = this.$store.state.variables.find(
+      (v) => v.name === 'securityAlarmTriggered'
+    ) || { value: false }
+
+    this.fireAlarmTriggered = this.$store.state.variables.find(
+      (v) => v.name === 'fireAlarmTriggered'
+    ) || { value: false }
+
+    this.gateClosed = this.$store.state.variables.find(
+      (v) => v.name === 'gateClosed'
+    ) || { value: false }
+
+    this.gateMoving = this.$store.state.variables.find(
+      (v) => v.name === 'gateMoving'
+    ) || { value: false }
+
+    this.gateHeldOpen = this.$store.state.variables.find(
+      (v) => v.name === 'gateHeldOpen'
+    ) || { value: false }
+
+    this.doorSystemEnabled = this.$store.state.variables.find(
+      (v) => v.name === 'doorSystemEnabled'
+    ) || { value: false }
+
+    this.northFoyerLocked = this.$store.state.variables.find(
+      (v) => v.name === 'northFoyerLocked'
+    ) || { value: false }
+
+    this.doors = this.$store.state.variables.filter((v) => v.group === 'doors')
+  },
   methods: {
-    toggleDoorSystemEnable() {
-      this.$store.dispatch('setVariableValue', {
-        name: 'toggleDoorSystem',
-        value: true,
-      })
-    },
     openGate() {
       this.$store.dispatch('setVariableValue', {
         name: 'openGate',
@@ -170,6 +229,18 @@ export default {
     toggleGateHold() {
       this.$store.dispatch('setVariableValue', {
         name: 'toggleGateHold',
+        value: true,
+      })
+    },
+    toggleDoorSystemEnable() {
+      this.$store.dispatch('setVariableValue', {
+        name: 'toggleDoorSystem',
+        value: true,
+      })
+    },
+    toggleNorthFoyerLocked() {
+      this.$store.dispatch('setVariableValue', {
+        name: 'toggleNorthFoyerLocked',
         value: true,
       })
     },

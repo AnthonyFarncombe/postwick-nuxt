@@ -34,7 +34,11 @@ export default function ({ store }, inject) {
           resolve()
         })
       ),
-    ]).then(() => store.commit('setConnectionState', true))
+    ]).then(() => {
+      store.commit('setConnectionState', true)
+      // eslint-disable-next-line no-console
+      console.log('Variables loaded')
+    })
   })
 
   socket.on('variableValueUpdated', (variable) =>
