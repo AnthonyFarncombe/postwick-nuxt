@@ -114,30 +114,52 @@
               <th>Lock Proof</th>
               <th>Sensor</th>
               <th>Break Glass</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="door in doors" :key="door.name">
-              <td>{{ door.text }} ({{ door.value }})</td>
+            <tr
+              v-for="door in doors"
+              :key="door.name"
+              :class="{ amber: (door.value & 0x200) > 0 }"
+            >
               <td>
-                <span v-if="(door.value & 0x200) > 0">{{
-                  (door.value & 0x4) > 0 ? 'Energised' : 'Released'
-                }}</span>
+                {{ door.text }}
               </td>
               <td>
-                <span v-if="(door.value & 0x400) > 0">{{
-                  (door.value & 0x8) > 0 ? 'Pending' : 'Locked'
-                }}</span>
+                <span
+                  v-if="(door.value & 0x400) > 0"
+                  :class="(door.value & 0x4) > 0 ? 'green--text' : 'red--text'"
+                  >{{ (door.value & 0x4) > 0 ? 'Energised' : 'Released' }}</span
+                >
               </td>
               <td>
-                <span v-if="(door.value & 0x800) > 0">{{
-                  (door.value & 0x10) > 0 ? 'Closed' : 'Open'
-                }}</span>
+                <span
+                  v-if="(door.value & 0x800) > 0 && (door.value & 0x4) > 0"
+                  :class="(door.value & 0x8) > 0 ? 'red--text' : 'green--text'"
+                  >{{ (door.value & 0x8) > 0 ? 'Pending' : 'Locked' }}</span
+                >
               </td>
               <td>
-                <span v-if="(door.value & 0x1000) > 0">{{
-                  (door.value & 0x20) > 0 ? 'Healthy' : 'Broken'
-                }}</span>
+                <span
+                  v-if="(door.value & 0x1000) > 0"
+                  :class="(door.value & 0x10) > 0 ? 'green--text' : 'red--text'"
+                  >{{ (door.value & 0x10) > 0 ? 'Closed' : 'Open' }}</span
+                >
+              </td>
+              <td>
+                <span
+                  v-if="(door.value & 0x2000) > 0 && (door.value & 0x4) > 0"
+                  :class="(door.value & 0x20) > 0 ? 'green--text' : 'red--text'"
+                  >{{ (door.value & 0x20) > 0 ? 'Healthy' : 'Broken' }}</span
+                >
+              </td>
+              <td>
+                <v-btn
+                  v-if="(door.value & 0x8000) > 0"
+                  @click="disableDoor(door)"
+                  >{{ (door.value & 0x200) > 0 ? 'Enable' : 'Disable' }}</v-btn
+                >
               </td>
             </tr>
           </tbody>
@@ -241,6 +263,17 @@ export default {
     toggleNorthFoyerLocked() {
       this.$store.dispatch('setVariableValue', {
         name: 'toggleNorthFoyerLocked',
+        value: true,
+      })
+    },
+    disableDoor(door) {
+      const name =
+        'disable' +
+        door.name.substr(0, 1).toUpperCase() +
+        door.name.substr(1, door.name.length - 'Status'.length - 1)
+
+      this.$store.dispatch('setVariableValue', {
+        name,
         value: true,
       })
     },
