@@ -61,5 +61,13 @@ export default function ({ store }, inject) {
       if (!socket.connected) return
       socket.emit('setVariableValue', { name, value })
     },
+    saveSchedule(schedule) {
+      if (!socket.connected) return
+      socket.emit('saveSchedule', schedule)
+    },
+    deleteSchedule(id) {
+      if (!socket.connected) return
+      socket.emit('deleteSchedule', id)
+    },
   })
 }

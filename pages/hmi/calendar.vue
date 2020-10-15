@@ -2,8 +2,9 @@
   <v-data-table
     :headers="headers"
     :items="schedules"
-    :disable-pagination="true"
-    :disable-sort="true"
+    disable-pagination
+    disable-sort
+    hide-default-footer
     class="elevation-1"
     @click:row="editSchedule"
   >
@@ -12,7 +13,7 @@
         <v-toolbar-title>Schedules</v-toolbar-title>
         <v-divider class="mx-4" inset vertical></v-divider>
         <v-spacer></v-spacer>
-        <v-dialog v-model="dialog" max-width="500px" :persistent="true">
+        <v-dialog v-model="dialog" max-width="500px">
           <template v-slot:activator="{ on }">
             <v-btn color="default" dark class="mb-2" v-on="on"
               >New Schedule</v-btn
@@ -89,12 +90,12 @@
                 >
                   <v-col cols="12">
                     <v-select
-                      v-model="editedSchedule.startDate"
-                      :items="startDates"
+                      v-model="editedSchedule.nextDate"
+                      :items="nextDates"
                       item-text="text"
                       item-value="value"
-                      label="Start Date"
-                      :error="errors.startDate"
+                      label="Next Date"
+                      :error="errors.nextDate"
                     ></v-select>
                   </v-col>
                 </v-row>
@@ -125,8 +126,8 @@
     <template v-slot:[`item.frequency`]="{ value }">
       {{ frequencyOptions.find((o) => o.value === value).text }}
     </template>
-    <template v-slot:[`item.startDate`]="{ value }">
-      {{ formatStartDate(value) }}
+    <template v-slot:[`item.nextDate`]="{ value }">
+      {{ formatDate(value) }}
     </template>
     <template v-slot:[`item.overrideDay`]="{ value }">
       {{ value ? 'Yes' : 'No' }}
@@ -135,7 +136,7 @@
 </template>
 
 <script>
-import moment from 'moment'
+import dayjs from 'dayjs'
 
 export default {
   layout: 'hmi',
@@ -155,8 +156,8 @@ export default {
         value: 'frequency',
       },
       {
-        text: 'Start Date',
-        value: 'startDate',
+        text: 'Next Date',
+        value: 'nextDate',
       },
       {
         text: 'Override Day',
@@ -179,7 +180,64 @@ export default {
   }),
   computed: {
     schedules() {
-      return this.$store.state.schedules
+      const schedules = this.$store.state.schedules
+        .map((s) => {
+          const today = dayjs().hour(0).minute(0).second(0).millisecond(0)
+          const startDate =
+            s.startDate &&
+            dayjs(s.startDate, 'YYYYMMDD')
+              .hour(0)
+              .minute(0)
+              .second(0)
+              .millisecond(0)
+          let nextDate = dayjs(s.startDate || today)
+
+          if (s.frequency === '1') {
+            const dayIndex = this.daysOfTheWeek.indexOf(s.dayOfWeek)
+            nextDate = dayjs(today).day(dayIndex)
+            if (nextDate < today) nextDate = nextDate.add(7, 'days')
+          } else if (['2', '3'].includes(s.frequency)) {
+            const frequency = parseInt(s.frequency)
+            const weeks =
+              Math.ceil(today.diff(startDate, 'weeks') / frequency) * frequency
+            nextDate = startDate.add(weeks, 'weeks')
+          } else if (s.frequency === 'CM') {
+            const getCareMeetingDate = (month) => {
+              let date = dayjs(today).month(month).date(1).day(7)
+              if (date.date() > 7) date = date.add(-7, 'days')
+              date = date.add(-1, 'days')
+              return date
+            }
+            nextDate = getCareMeetingDate(today.month())
+            if (nextDate < today)
+              nextDate = getCareMeetingDate(today.month() + 1)
+          }
+
+          return { ...s, nextDate: nextDate.format('YYYYMMDD') }
+        })
+        .filter((s) => {
+          // eslint-disable-next-line no-console
+          console.log(dayjs(s.nextDate, 'YYYYMMDD').format('dddd, DD MMM YYYY'))
+          return dayjs(s.nextDate, 'YYYYMMDD') >= dayjs()
+        })
+
+      schedules.sort((a, b) => {
+        if (
+          this.daysOfTheWeek.indexOf(a.dayOfWeek) <
+          this.daysOfTheWeek.indexOf(b.dayOfWeek)
+        )
+          return -1
+        if (
+          this.daysOfTheWeek.indexOf(a.dayOfWeek) >
+          this.daysOfTheWeek.indexOf(b.dayOfWeek)
+        )
+          return 1
+        if (a.timeOfMeeting < b.timeOfMeeting) return -1
+        if (a.timeOfMeeting > b.timeOfMeeting) return 1
+        return 0
+      })
+
+      return schedules
     },
     formTitle() {
       return this.editedIndex === -1 ? 'New Schedule' : 'Edit Schedule'
@@ -196,7 +254,7 @@ export default {
         options.push({ value: 'CM', text: 'Care Meeting' })
       return options
     },
-    startDates() {
+    nextDates() {
       const dates = []
 
       if (
@@ -207,7 +265,7 @@ export default {
         return dates
       }
 
-      const today = moment().utc().set({
+      const today = dayjs().set({
         hour: 0,
         minute: 0,
         second: 0,
@@ -227,8 +285,8 @@ export default {
       for (let i = 0; i < frequency; i++) {
         const date = firstDate.clone().add(i, 'weeks')
         dates.push({
-          value: date.toISOString(),
-          text: date.format('dddd, Do MMM YYYY'),
+          value: date.format('YYYYMMDD'),
+          text: date.format('dddd, DD MMM YYYY'),
         })
       }
 
@@ -239,8 +297,8 @@ export default {
         dayOfWeek: !this.editedSchedule.dayOfWeek,
         timeOfMeeting: !this.editedSchedule.timeOfMeeting,
         frequency: !this.editedSchedule.frequency,
-        startDate:
-          !this.editedSchedule.startDate &&
+        nextDate:
+          !this.editedSchedule.nextDate &&
           ['0', '2', '3'].includes(this.editedSchedule.frequency),
       }
     },
@@ -249,7 +307,7 @@ export default {
         this.errors.dayOfWeek ||
         this.errors.timeOfMeeting ||
         this.errors.frequency ||
-        this.errors.startDate
+        this.errors.nextDate
       )
     },
   },
@@ -266,8 +324,8 @@ export default {
     },
   },
   methods: {
-    formatStartDate(value) {
-      return value && moment(value).utc().format('MMMM Do YYYY')
+    formatDate(value) {
+      return value && dayjs(value).format('DD MMMM YYYY')
     },
     editSchedule(schedule) {
       this.editedSchedule = Object.assign({}, schedule)
@@ -285,6 +343,8 @@ export default {
       }, 300)
     },
     save() {
+      if (['0', '2', '3'].includes(this.editedSchedule.frequency))
+        this.editedSchedule.startDate = this.editedSchedule.nextDate
       this.$store.dispatch('saveSchedule', this.editedSchedule)
       this.close()
     },

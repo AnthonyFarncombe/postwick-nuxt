@@ -21,6 +21,12 @@ const actions = {
   setVariableValue(_context, payload) {
     this.$socket.setVariableValue(payload)
   },
+  saveSchedule(_context, schedule) {
+    this.$socket.saveSchedule(schedule)
+  },
+  deleteSchedule(_context, id) {
+    this.$socket.deleteSchedule(id)
+  },
 }
 
 export default actions
