@@ -215,11 +215,11 @@ export default {
 
           return { ...s, nextDate: nextDate.format('YYYYMMDD') }
         })
-        .filter((s) => {
-          // eslint-disable-next-line no-console
-          console.log(dayjs(s.nextDate, 'YYYYMMDD').format('dddd, DD MMM YYYY'))
-          return dayjs(s.nextDate, 'YYYYMMDD') >= dayjs()
-        })
+        .filter(
+          (s) =>
+            dayjs(s.nextDate, 'YYYYMMDD') >=
+            dayjs().hour(0).minute(0).second(0).millisecond(0)
+        )
 
       schedules.sort((a, b) => {
         if (

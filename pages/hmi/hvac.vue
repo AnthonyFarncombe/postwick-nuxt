@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <v-col sm="12" md="8" lg="6" xl="3">
+      <v-col cols="12" sm="12" md="8" lg="6" xl="4">
         <v-simple-table>
           <template v-slot:default>
             <tbody>
@@ -52,7 +52,7 @@
         </v-simple-table>
       </v-col>
 
-      <v-col sm="12" md="8" lg="6" xl="3">
+      <v-col cols="12" sm="12" md="8" lg="6" xl="4">
         <v-simple-table>
           <template v-slot:default>
             <thead>

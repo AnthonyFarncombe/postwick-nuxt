@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <v-col sm="12" md="8" lg="6" xl="6">
+      <v-col cols="12" sm="12" md="8" lg="6" xl="6">
         <v-simple-table>
           <template v-slot:default>
             <tbody>
@@ -42,7 +42,7 @@
         </v-simple-table>
       </v-col>
 
-      <v-col sm="12" md="8" lg="6" xl="6">
+      <v-col cols="12" sm="12" md="8" lg="6" xl="6">
         <v-simple-table>
           <template v-slot:default>
             <tbody>
@@ -105,66 +105,53 @@
     </v-row>
 
     <v-row>
-      <v-simple-table>
-        <template v-slot:default>
-          <thead>
-            <tr>
-              <th>Door</th>
-              <th>Maglock</th>
-              <th>Lock Proof</th>
-              <th>Sensor</th>
-              <th>Break Glass</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="door in doors"
-              :key="door.name"
-              :class="{ amber: (door.value & 0x200) > 0 }"
+      <v-col cols="12" sm="12" md="12" lg="8">
+        <v-data-table
+          :headers="doorHeaders"
+          :items="doors"
+          disable-pagination
+          disable-sort
+          hide-default-footer
+          class="elevation-1"
+        >
+          <template v-slot:[`item.maglock`]="{ item }">
+            <span
+              v-if="(item.value & 0x400) > 0"
+              :class="(item.value & 0x4) > 0 ? 'green--text' : 'red--text'"
+              >{{ (item.value & 0x4) > 0 ? 'Energised' : 'Released' }}</span
             >
-              <td>
-                {{ door.text }}
-              </td>
-              <td>
-                <span
-                  v-if="(door.value & 0x400) > 0"
-                  :class="(door.value & 0x4) > 0 ? 'green--text' : 'red--text'"
-                  >{{ (door.value & 0x4) > 0 ? 'Energised' : 'Released' }}</span
-                >
-              </td>
-              <td>
-                <span
-                  v-if="(door.value & 0x800) > 0 && (door.value & 0x4) > 0"
-                  :class="(door.value & 0x8) > 0 ? 'red--text' : 'green--text'"
-                  >{{ (door.value & 0x8) > 0 ? 'Pending' : 'Locked' }}</span
-                >
-              </td>
-              <td>
-                <span
-                  v-if="(door.value & 0x1000) > 0"
-                  :class="(door.value & 0x10) > 0 ? 'green--text' : 'red--text'"
-                  >{{ (door.value & 0x10) > 0 ? 'Closed' : 'Open' }}</span
-                >
-              </td>
-              <td>
-                <span
-                  v-if="(door.value & 0x2000) > 0 && (door.value & 0x4) > 0"
-                  :class="(door.value & 0x20) > 0 ? 'green--text' : 'red--text'"
-                  >{{ (door.value & 0x20) > 0 ? 'Healthy' : 'Broken' }}</span
-                >
-              </td>
-              <td>
-                <v-btn
-                  v-if="(door.value & 0x8000) > 0"
-                  @click="disableDoor(door)"
-                  >{{ (door.value & 0x200) > 0 ? 'Enable' : 'Disable' }}</v-btn
-                >
-              </td>
-            </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
+          </template>
+          <template v-slot:[`item.lockProof`]="{ item }">
+            <span
+              v-if="(item.value & 0x800) > 0 && (item.value & 0x4) > 0"
+              :class="(item.value & 0x8) > 0 ? 'red--text' : 'green--text'"
+              >{{ (item.value & 0x8) > 0 ? 'Pending' : 'Locked' }}</span
+            >
+          </template>
+          <template v-slot:[`item.sensor`]="{ item }">
+            <span
+              v-if="(item.value & 0x1000) > 0"
+              :class="(item.value & 0x10) > 0 ? 'green--text' : 'red--text'"
+              >{{ (item.value & 0x10) > 0 ? 'Closed' : 'Open' }}</span
+            >
+          </template>
+          <template v-slot:[`item.breakGlass`]="{ item }">
+            <span
+              v-if="(item.value & 0x2000) > 0 && (item.value & 0x4) > 0"
+              :class="(item.value & 0x20) > 0 ? 'green--text' : 'red--text'"
+              >{{ (item.value & 0x20) > 0 ? 'Healthy' : 'Broken' }}</span
+            >
+          </template>
+          <template v-slot:[`item.disable`]="{ item }">
+            <v-btn
+              v-if="(item.value & 0x8000) > 0"
+              :color="(item.value & 0x200) > 0 ? 'amber' : ''"
+              @click="disableDoor(item)"
+              >{{ (item.value & 0x200) > 0 ? 'Enable' : 'Disable' }}</v-btn
+            >
+          </template>
+        </v-data-table>
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -182,6 +169,32 @@ export default {
     doorSystemEnabled: { value: false },
     northFoyerLocked: { value: false },
     doors: [],
+    doorHeaders: [
+      {
+        text: 'Door',
+        value: 'text',
+      },
+      {
+        text: 'Maglock',
+        value: 'maglock',
+      },
+      {
+        text: 'Lock Proof',
+        value: 'lockProof',
+      },
+      {
+        text: 'Sensor',
+        value: 'Sensor',
+      },
+      {
+        text: 'Break Glass',
+        value: 'breakGlass',
+      },
+      {
+        text: 'Action',
+        value: 'disable',
+      },
+    ],
   }),
   computed: {
     gateColor() {

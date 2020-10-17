@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <v-col sm="12" md="8" lg="6" xl="6">
+      <v-col cols="12" sm="12" md="8" lg="6" xl="6">
         <v-simple-table>
           <template v-slot:default>
             <tbody>
@@ -24,7 +24,7 @@
         </v-simple-table>
       </v-col>
 
-      <v-col sm="6" md="4" lg="3">
+      <v-col cols="12" sm="6" md="4" lg="3" xl="3">
         <v-card :color="waterSolenoidColor">
           <v-card-title>
             <h4>Water Solenoid</h4>
