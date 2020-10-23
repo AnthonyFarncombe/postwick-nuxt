@@ -108,6 +108,16 @@
                     ></v-switch>
                   </v-col>
                 </v-row>
+
+                <v-row>
+                  <v-col cols="12">
+                    <v-combobox
+                      v-model="editedSchedule.meetingType"
+                      label="Meeting Type"
+                      :items="meetingTypes"
+                    />
+                  </v-col>
+                </v-row>
               </v-container>
             </v-card-text>
 
@@ -177,6 +187,12 @@ export default {
       'Saturday',
     ],
     timeOfMeetingMenuModel: false,
+    meetingTypes: [
+      'Local (<50)',
+      'City (<200)',
+      'Interchange (<500)',
+      'Full (>500)',
+    ],
   }),
   computed: {
     schedules() {

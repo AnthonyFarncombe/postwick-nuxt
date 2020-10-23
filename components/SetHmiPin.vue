@@ -1,14 +1,5 @@
 <template>
-  <v-dialog
-    v-model="dialog"
-    :value="dialog"
-    max-width="280"
-    @change="$emit('change')"
-  >
-    <template v-slot:activator="{ on }">
-      <v-list-item-title v-on="on">Set HMI Pin</v-list-item-title>
-    </template>
-
+  <v-dialog v-model="show" max-width="280">
     <v-card>
       <v-card-text>
         <v-container>
@@ -65,31 +56,42 @@
 <script>
 export default {
   props: {
-    dialog: Boolean,
+    value: Boolean,
   },
   data: () => ({
     hmiPin: '',
     loggingIn: false,
   }),
+  computed: {
+    show: {
+      get() {
+        return this.value
+      },
+      set(value) {
+        this.$emit('input', value)
+        this.hmiPin = ''
+      },
+    },
+  },
   methods: {
     numberClick(num) {
       this.hmiPin += num
     },
     async submit() {
-      // try {
-      //   this.loggingIn = true
-      //   await this.$store.dispatch('login', {
-      //     email: this.user.email,
-      //     hmiPin: this.hmiPin,
-      //     hmi: true,
-      //   })
-      //   await this.$store.dispatch('loadAuthUser')
-      //   this.dialog = false
-      // } catch (err) {
-      //   this.hmiPin = ''
-      // } finally {
-      //   this.loggingIn = false
-      // }
+      try {
+        this.loggingIn = true
+        await this.$store.dispatch('login', {
+          email: this.user.email,
+          hmiPin: this.hmiPin,
+          hmi: true,
+        })
+        await this.$store.dispatch('loadAuthUser')
+        this.show = false
+      } catch (err) {
+        this.hmiPin = ''
+      } finally {
+        this.loggingIn = false
+      }
     },
   },
 }

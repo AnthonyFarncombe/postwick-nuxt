@@ -184,7 +184,7 @@ export default {
       },
       {
         text: 'Sensor',
-        value: 'Sensor',
+        value: 'sensor',
       },
       {
         text: 'Break Glass',

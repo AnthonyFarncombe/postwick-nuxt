@@ -35,7 +35,9 @@
             </template>
             <v-list>
               <v-list-item link>
-                <SetHmiPin />
+                <v-list-item-title @click="setHmiPinModal = true"
+                  >Set HMI Pin</v-list-item-title
+                >
               </v-list-item>
               <v-list-item link>
                 <v-list-item-title @click="logout">Logout</v-list-item-title>
@@ -74,6 +76,8 @@
         </v-row>
       </v-container>
     </v-app>
+
+    <SetHmiPin v-model="setHmiPinModal" />
   </div>
 </template>
 
@@ -91,6 +95,7 @@ export default {
   data: () => ({
     drawer: true,
     logoutTimeout: null,
+    setHmiPinModal: false,
   }),
   computed: {
     ...mapState(['authUser', 'connected']),

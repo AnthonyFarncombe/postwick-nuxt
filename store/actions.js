@@ -18,6 +18,10 @@ const actions = {
     this.$axios.setToken(null, 'bearer')
     context.commit('setAuthUser', null)
   },
+  setHmiPin(_context, { userId, pin }) {
+    // eslint-disable-next-line no-console
+    console.log(userId, pin)
+  },
   setVariableValue(_context, payload) {
     this.$socket.setVariableValue(payload)
   },

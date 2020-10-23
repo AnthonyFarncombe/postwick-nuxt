@@ -1,59 +1,74 @@
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12" sm="12" md="8" lg="6" xl="4">
-        <v-simple-table>
-          <template v-slot:default>
-            <tbody>
-              <tr :class="hvacRunning.value ? 'green' : 'red'">
-                <td class="text-left">
-                  <span class="title"
-                    >HVAC {{ hvacRunning.value ? 'Running' : 'Off' }}</span
-                  >
-                </td>
-                <td class="text-right">
-                  <v-btn @click="toggleHvacRunning"
-                    >Turn {{ hvacRunning.value ? 'Off' : 'On' }}</v-btn
-                  >
-                </td>
-              </tr>
-              <tr>
-                <td class="text-left">
-                  <span class="title">HVAC Set Point Temperature</span>
-                </td>
-                <td class="text-right">
-                  <v-btn
-                    fab
-                    x-small
-                    color="primary"
-                    class="mx-1"
-                    :disabled="hvacSetPoint.value - 5 < minSetPoint"
-                    @click="modifySetPoint(-5)"
-                  >
-                    <v-icon>mdi-minus</v-icon>
-                  </v-btn>
-                  <v-btn
-                    fab
-                    x-small
-                    color="primary"
-                    class="mx-1"
-                    :disabled="hvacSetPoint.value + 5 > maxSetPoint"
-                    @click="modifySetPoint(5)"
-                  >
-                    <v-icon>mdi-plus</v-icon>
-                  </v-btn>
-                  <span class="title"
-                    >{{ (hvacSetPoint.value / 10).toFixed(1) }}°C</span
-                  >
-                </td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-      </v-col>
+  <div>
+    <v-tabs v-model="tab">
+      <v-tab>General</v-tab>
+      <v-tab>Sensors</v-tab>
+      <v-tab>Condensers</v-tab>
+      <v-tab>Fans</v-tab>
+      <v-tab>Foyer</v-tab>
+    </v-tabs>
 
-      <v-col cols="12" sm="12" md="8" lg="6" xl="4">
-        <v-simple-table>
+    <v-tabs-items v-model="tab">
+      <v-tab-item>
+        <v-container>
+          <v-row>
+            <v-col cols="12" sm="12" md="8" lg="6" xl="4">
+              <v-simple-table>
+                <template v-slot:default>
+                  <tbody>
+                    <tr :class="hvacRunning.value ? 'green' : 'red'">
+                      <td class="text-left">
+                        <span class="title"
+                          >HVAC
+                          {{ hvacRunning.value ? 'Running' : 'Off' }}</span
+                        >
+                      </td>
+                      <td class="text-right">
+                        <v-btn @click="toggleHvacRunning"
+                          >Turn {{ hvacRunning.value ? 'Off' : 'On' }}</v-btn
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="text-left">
+                        <span class="title">HVAC Set Point Temperature</span>
+                      </td>
+                      <td class="text-right">
+                        <v-btn
+                          fab
+                          x-small
+                          color="primary"
+                          class="mx-1"
+                          :disabled="hvacSetPoint.value - 5 < minSetPoint"
+                          @click="modifySetPoint(-5)"
+                        >
+                          <v-icon>mdi-minus</v-icon>
+                        </v-btn>
+                        <v-btn
+                          fab
+                          x-small
+                          color="primary"
+                          class="mx-1"
+                          :disabled="hvacSetPoint.value + 5 > maxSetPoint"
+                          @click="modifySetPoint(5)"
+                        >
+                          <v-icon>mdi-plus</v-icon>
+                        </v-btn>
+                        <span class="title"
+                          >{{ (hvacSetPoint.value / 10).toFixed(1) }}°C</span
+                        >
+                      </td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-tab-item>
+
+      <v-tab-item>
+        <v-simple-table style="max-width: 360px">
           <template v-slot:default>
             <thead>
               <th class="text-left pa-4">Sensor</th>
@@ -69,25 +84,54 @@
             </tbody>
           </template>
         </v-simple-table>
-      </v-col>
-    </v-row>
-  </v-container>
+      </v-tab-item>
+
+      <v-tab-item>
+        <v-data-table
+          :items="condensers"
+          :headers="condenserHeaders"
+          disable-filtering
+          disable-pagination
+          disable-sort
+          hide-default-footer
+        />
+      </v-tab-item>
+
+      <v-tab-item></v-tab-item>
+
+      <v-tab-item></v-tab-item>
+    </v-tabs-items>
+  </div>
 </template>
 
 <script>
 export default {
   layout: 'hmi',
   data: () => ({
+    tab: null,
     hvacRunning: {},
     hvacSetPoint: {},
     minSetPoint: 160,
     maxSetPoint: 240,
+    condenserHeaders: [
+      {
+        text: 'Condenser',
+        value: 'text',
+      },
+      {
+        text: 'Status',
+        value: 'value',
+      },
+    ],
   }),
   computed: {
     sensors() {
       return this.$store.state.variables.filter(
         (v) => v.group === 'temperatureSensors'
       )
+    },
+    condensers() {
+      return this.$store.state.variables.filter((v) => v.group === 'condensers')
     },
   },
   created() {
