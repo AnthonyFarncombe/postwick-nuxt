@@ -94,12 +94,72 @@
           disable-pagination
           disable-sort
           hide-default-footer
-        />
+        >
+          <template v-slot:[`item.command`]="{ item }">
+            {{
+              (item.value & 0x4) === 0
+                ? 'Off'
+                : condenserHeatingEnable.value
+                ? 'Heat'
+                : 'Cool'
+            }}
+          </template>
+
+          <template v-slot:[`item.running`]="{ item }">
+            {{ (item.value & 0x8) > 0 ? 'Running' : '' }}
+          </template>
+
+          <template v-slot:[`item.fault`]="{ item }">
+            {{ (item.value & 0x10) > 0 ? 'In Fault' : '' }}
+          </template>
+
+          <template v-slot:[`item.defrost`]="{ item }">
+            {{ (item.value & 0x20) > 0 ? 'Defrosting' : '' }}
+          </template>
+        </v-data-table>
       </v-tab-item>
 
-      <v-tab-item></v-tab-item>
+      <v-tab-item>
+        <v-data-table
+          :items="fans"
+          :headers="fanHeaders"
+          disable-filtering
+          disable-pagination
+          disable-sort
+          hide-default-footer
+        >
+          <template v-slot:[`item.speed`]="{ item }">
+            {{ getFanCommand(item).value }}
+          </template>
 
-      <v-tab-item></v-tab-item>
+          <template v-slot:[`item.fault`]="{ item }">
+            {{ item.value ? 'In Fault' : 'OK' }}
+          </template>
+        </v-data-table>
+      </v-tab-item>
+
+      <v-tab-item>
+        <v-data-table
+          :items="cassettes"
+          :headers="cassetteHeaders"
+          disable-filtering
+          disable-pagination
+          disable-sort
+          hide-default-footer
+        >
+          <template v-slot:[`item.command`]="{ item }">
+            {{ (item.value & 0x4) > 0 ? 'Toggle' : 'No Command' }}
+          </template>
+
+          <template v-slot:[`item.running`]="{ item }">
+            {{ (item.value & 0x8) > 0 ? 'Running' : 'Off' }}
+          </template>
+
+          <template v-slot:[`item.fault`]="{ item }">
+            {{ (item.value & 0x10) > 0 ? 'Fault' : 'OK' }}
+          </template>
+        </v-data-table>
+      </v-tab-item>
     </v-tabs-items>
   </div>
 </template>
@@ -111,6 +171,10 @@ export default {
     tab: null,
     hvacRunning: {},
     hvacSetPoint: {},
+    condenserHeatingEnable: {},
+    fans: [],
+    supplyAirCommand: {},
+    returnAirCommand: {},
     minSetPoint: 160,
     maxSetPoint: 240,
     condenserHeaders: [
@@ -119,8 +183,53 @@ export default {
         value: 'text',
       },
       {
+        text: 'Command',
+        value: 'command',
+      },
+      {
+        text: 'Runnung',
+        value: 'running',
+      },
+      {
+        text: 'Fault',
+        value: 'fault',
+      },
+      {
+        text: 'Defrost',
+        value: 'defrost',
+      },
+    ],
+    fanHeaders: [
+      {
+        text: 'Fan',
+        value: 'text',
+      },
+      {
+        text: 'Requested Speed',
+        value: 'speed',
+      },
+      {
         text: 'Status',
-        value: 'value',
+        value: 'fault',
+      },
+    ],
+    cassettes: [],
+    cassetteHeaders: [
+      {
+        text: 'Cassette',
+        value: 'text',
+      },
+      {
+        text: 'Command',
+        value: 'command',
+      },
+      {
+        text: 'Running',
+        value: 'running',
+      },
+      {
+        text: 'Fault',
+        value: 'fault',
       },
     ],
   }),
@@ -142,6 +251,24 @@ export default {
     this.hvacSetPoint = this.$store.state.variables.find(
       (v) => v.name === 'hvacSetPoint'
     ) || { value: 200 }
+
+    this.condenserHeatingEnable = this.$store.state.variables.find(
+      (v) => v.name === 'condenserHeatingEnable'
+    ) || { value: false }
+
+    this.fans = this.$store.state.variables.filter((v) => v.group === 'fans')
+
+    this.supplyAirCommand = this.$store.state.variables.find(
+      (v) => v.name === 'supplyAirCommand'
+    ) || { value: 0 }
+
+    this.returnAirCommand = this.$store.state.variables.find(
+      (v) => v.name === 'returnAirCommand'
+    ) || { value: 0 }
+
+    this.cassettes = this.$store.state.variables.filter(
+      (v) => v.group === 'cassettes'
+    )
   },
   methods: {
     toggleHvacRunning() {
@@ -158,6 +285,14 @@ export default {
           value: newSetPoint,
         })
       }
+    },
+    getFanCommand(fan) {
+      if (fan.name.substr(0, 6) === 'supply') {
+        return this.supplyAirCommand
+      } else if (fan.name.substr(0, 6) === 'return') {
+        return this.returnAirCommand
+      }
+      return { value: 0 }
     },
   },
   head: {
