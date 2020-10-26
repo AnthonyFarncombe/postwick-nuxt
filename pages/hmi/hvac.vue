@@ -120,22 +120,52 @@
       </v-tab-item>
 
       <v-tab-item>
-        <v-data-table
-          :items="fans"
-          :headers="fanHeaders"
-          disable-filtering
-          disable-pagination
-          disable-sort
-          hide-default-footer
-        >
-          <template v-slot:[`item.speed`]="{ item }">
-            {{ getFanCommand(item).value }}
-          </template>
+        <v-container>
+          <v-row>
+            <v-col cols="12" lg="6">
+              <v-data-table
+                :items="fans"
+                :headers="fanHeaders"
+                disable-filtering
+                disable-pagination
+                disable-sort
+                hide-default-footer
+              >
+                <template v-slot:[`item.speed`]="{ item }">
+                  {{ getFanCommand(item).value }}
+                </template>
 
-          <template v-slot:[`item.fault`]="{ item }">
-            {{ item.value ? 'In Fault' : 'OK' }}
-          </template>
-        </v-data-table>
+                <template v-slot:[`item.fault`]="{ item }">
+                  {{ item.value ? 'In Fault' : 'OK' }}
+                </template>
+              </v-data-table>
+            </v-col>
+
+            <v-col cols="12" lg="4">
+              <v-card>
+                <v-card-title>
+                  <h4>Fan Speed</h4>
+                </v-card-title>
+
+                <v-divider />
+
+                <v-radio-group
+                  :value="meetingSize.value"
+                  column
+                  class="ml-4"
+                  @change="changeMeetingSize"
+                >
+                  <v-radio label="Manual" :value="0" class="my-2" />
+                  <v-radio label="Auto" :value="1" class="my-2" />
+                  <v-radio label="Local" :value="2" class="my-2" />
+                  <v-radio label="City" :value="3" class="my-2" />
+                  <v-radio label="Interchange" :value="4" class="my-2" />
+                  <v-radio label="Full" :value="5" class="my-2" />
+                </v-radio-group>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
       </v-tab-item>
 
       <v-tab-item>
@@ -213,6 +243,7 @@ export default {
         value: 'fault',
       },
     ],
+    meetingSize: { value: 0 },
     cassettes: [],
     cassetteHeaders: [
       {
@@ -258,6 +289,10 @@ export default {
 
     this.fans = this.$store.state.variables.filter((v) => v.group === 'fans')
 
+    this.meetingSize = this.$store.state.variables.find(
+      (v) => v.name === 'meetingSize'
+    ) || { value: 0 }
+
     this.supplyAirCommand = this.$store.state.variables.find(
       (v) => v.name === 'supplyAirCommand'
     ) || { value: 0 }
@@ -293,6 +328,12 @@ export default {
         return this.returnAirCommand
       }
       return { value: 0 }
+    },
+    changeMeetingSize(value) {
+      this.$store.dispatch('setVariableValue', {
+        name: 'meetingSize',
+        value,
+      })
     },
   },
   head: {
