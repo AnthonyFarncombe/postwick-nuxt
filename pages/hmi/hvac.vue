@@ -118,7 +118,15 @@
             {{ (item.value & 0x20) > 0 ? 'Defrosting' : '' }}
           </template>
 
-          <template v-slot:[`item.hours`]> 0 </template>
+          <template v-slot:[`item.hours`]="{ item }">
+            {{ getCondenserHours(item).value }} hours
+          </template>
+
+          <template v-slot:[`item.disable`]="{ item }">
+            <v-btn @click="toggleCondenserDisable(item)">
+              {{ (item.value & 0x40) > 0 ? 'Enable' : 'Disable' }}
+            </v-btn>
+          </template>
         </v-data-table>
       </v-tab-item>
 
@@ -126,6 +134,9 @@
         <v-container>
           <v-row>
             <v-col cols="12" lg="6">
+              <v-btn :disabled="hvacRunning.value" @click="toggleFans"
+                >{{ supplyAirCommand.value > 0 ? 'Stop' : 'Start' }} Fans</v-btn
+              >
               <v-data-table
                 :items="fans"
                 :headers="fanHeaders"
@@ -136,7 +147,7 @@
                 :item-class="fanItemClass"
               >
                 <template v-slot:[`item.speed`]="{ item }">
-                  {{ getFanCommand(item).value }}
+                  {{ (getFanCommand(item).value / 100).toFixed(0) }}%
                 </template>
 
                 <template v-slot:[`item.fault`]="{ item }">
@@ -248,6 +259,11 @@ export default {
         value: 'hours',
         align: 'center',
       },
+      {
+        text: 'Disable',
+        value: 'disable',
+        align: 'center',
+      },
     ],
     fanHeaders: [
       {
@@ -351,6 +367,28 @@ export default {
         })
       }
     },
+    getCondenserHours(condenser) {
+      const name =
+        condenser.name.substr(0, condenser.name.length - 'Status'.length) +
+        'HoursRun'
+      return (
+        this.$store.state.variables.find((v) => v.name === name) || { value: 0 }
+      )
+    },
+    toggleCondenserDisable(condenser) {
+      const match = condenser.name.match(/^condenser(\d)Status/)
+      const index = parseInt(match[1])
+      this.$store.dispatch('setVariableValue', {
+        name: 'toggleCondenserDisable',
+        value: index,
+      })
+    },
+    toggleFans() {
+      this.$store.dispatch('setVariableValue', {
+        name: 'toggleAhuFans',
+        value: true,
+      })
+    },
     getFanCommand(fan) {
       if (fan.name.substr(0, 6) === 'supply') {
         return this.supplyAirCommand
@@ -374,14 +412,16 @@ export default {
       this.$store.dispatch('setVariableValue', { name, value: true })
     },
     condenserItemClass(item) {
-      if ((item.value & 0x10) > 0) {
-        return 'orange'
+      if ((item.value & 0x40) > 0) {
+        return 'grey' // Disabled
+      } else if ((item.value & 0x10) > 0) {
+        return 'orange' // Fault
       } else if ((item.value & 0x20) > 0) {
-        return 'blue'
+        return 'purple' // Defrost
       } else if ((item.value & 0x8) > 0) {
-        return 'green'
+        return 'blue' // Cooling
       } else {
-        return 'red'
+        return 'red' // Heating
       }
     },
     fanItemClass(item) {
