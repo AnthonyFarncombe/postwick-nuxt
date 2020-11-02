@@ -3,9 +3,10 @@
     <v-tabs v-model="tab">
       <v-tab>General</v-tab>
       <v-tab>Sensors</v-tab>
-      <v-tab>Condensers</v-tab>
       <v-tab>Fans</v-tab>
+      <v-tab>Condensers</v-tab>
       <v-tab>Foyer</v-tab>
+      <v-tab>Toilets</v-tab>
     </v-tabs>
 
     <v-tabs-items v-model="tab">
@@ -87,50 +88,6 @@
       </v-tab-item>
 
       <v-tab-item>
-        <v-data-table
-          :items="condensers"
-          :headers="condenserHeaders"
-          disable-filtering
-          disable-pagination
-          disable-sort
-          hide-default-footer
-          :item-class="condenserItemClass"
-        >
-          <template v-slot:[`item.command`]="{ item }">
-            {{
-              (item.value & 0x4) === 0
-                ? 'Off'
-                : condenserHeatingEnable.value
-                ? 'Heat'
-                : 'Cool'
-            }}
-          </template>
-
-          <template v-slot:[`item.running`]="{ item }">
-            {{ (item.value & 0x8) > 0 ? 'Running' : '' }}
-          </template>
-
-          <template v-slot:[`item.fault`]="{ item }">
-            {{ (item.value & 0x10) > 0 ? 'In Fault' : '' }}
-          </template>
-
-          <template v-slot:[`item.defrost`]="{ item }">
-            {{ (item.value & 0x20) > 0 ? 'Defrosting' : '' }}
-          </template>
-
-          <template v-slot:[`item.hours`]="{ item }">
-            {{ getCondenserHours(item).value }} hours
-          </template>
-
-          <template v-slot:[`item.disable`]="{ item }">
-            <v-btn @click="toggleCondenserDisable(item)">
-              {{ (item.value & 0x40) > 0 ? 'Enable' : 'Disable' }}
-            </v-btn>
-          </template>
-        </v-data-table>
-      </v-tab-item>
-
-      <v-tab-item>
         <v-container>
           <v-row>
             <v-col cols="12" lg="6">
@@ -185,6 +142,50 @@
 
       <v-tab-item>
         <v-data-table
+          :items="condensers"
+          :headers="condenserHeaders"
+          disable-filtering
+          disable-pagination
+          disable-sort
+          hide-default-footer
+          :item-class="condenserItemClass"
+        >
+          <template v-slot:[`item.command`]="{ item }">
+            {{
+              (item.value & 0x4) === 0
+                ? 'Off'
+                : condenserHeatingEnable.value
+                ? 'Heat'
+                : 'Cool'
+            }}
+          </template>
+
+          <template v-slot:[`item.running`]="{ item }">
+            {{ (item.value & 0x8) > 0 ? 'Running' : '' }}
+          </template>
+
+          <template v-slot:[`item.fault`]="{ item }">
+            {{ (item.value & 0x10) > 0 ? 'In Fault' : '' }}
+          </template>
+
+          <template v-slot:[`item.defrost`]="{ item }">
+            {{ (item.value & 0x20) > 0 ? 'Defrosting' : '' }}
+          </template>
+
+          <template v-slot:[`item.hours`]="{ item }">
+            {{ getCondenserHours(item).value }} hours
+          </template>
+
+          <template v-slot:[`item.disable`]="{ item }">
+            <v-btn @click="toggleCondenserDisable(item)">
+              {{ (item.value & 0x40) > 0 ? 'Enable' : 'Disable' }}
+            </v-btn>
+          </template>
+        </v-data-table>
+      </v-tab-item>
+
+      <v-tab-item>
+        <v-data-table
           :items="cassettes"
           :headers="cassetteHeaders"
           disable-filtering
@@ -212,6 +213,58 @@
           </template>
         </v-data-table>
       </v-tab-item>
+
+      <v-tab-item>
+        <v-container>
+          <v-row>
+            <v-col cols="12" lg="5">
+              <v-data-table
+                :items="toiletHeaters"
+                :headers="toiletHeaterHeaders"
+                disable-filtering
+                disable-pagination
+                disable-sort
+                hide-default-footer
+                :item-class="toiletHeaterItemClass"
+              >
+                <template v-slot:[`item.value`]="{ value }">
+                  {{ value ? 'On' : 'Off' }}
+                </template>
+
+                <template v-slot:[`item.action`]="{ item }">
+                  <v-btn @click="toggleToiletHeater(item)">
+                    {{ item.value ? 'Turn Off' : 'Turn On' }}
+                  </v-btn>
+                </template>
+              </v-data-table>
+            </v-col>
+            <v-col cols="12" lg="7">
+              <v-data-table
+                :items="toiletExtractFans"
+                :headers="toiletExtractFanHeaders"
+                disable-filtering
+                disable-pagination
+                disable-sort
+                hide-default-footer
+              >
+                <template v-slot:[`item.status`]="{ item }">
+                  {{ getExtractFanStatus(item) }}
+                </template>
+
+                <template v-slot:[`item.speed`]="{ item }">
+                  {{ item.actlVelo.value }}
+                </template>
+
+                <template v-slot:[`item.action`]="{ item }">
+                  <v-btn @click="toggleToiletExtractFan(item.toggleName)">
+                    {{ (item.axisStatus.value & 0x40) > 0 ? 'Stop' : 'Start' }}
+                  </v-btn>
+                </template>
+              </v-data-table>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-tab-item>
     </v-tabs-items>
   </div>
 </template>
@@ -229,6 +282,22 @@ export default {
     returnAirCommand: {},
     minSetPoint: 160,
     maxSetPoint: 240,
+    fanHeaders: [
+      {
+        text: 'Fan',
+        value: 'text',
+      },
+      {
+        text: 'Requested Speed',
+        value: 'speed',
+        align: 'center',
+      },
+      {
+        text: 'Status',
+        value: 'fault',
+        align: 'center',
+      },
+    ],
     condenserHeaders: [
       {
         text: 'Condenser',
@@ -265,22 +334,6 @@ export default {
         align: 'center',
       },
     ],
-    fanHeaders: [
-      {
-        text: 'Fan',
-        value: 'text',
-      },
-      {
-        text: 'Requested Speed',
-        value: 'speed',
-        align: 'center',
-      },
-      {
-        text: 'Status',
-        value: 'fault',
-        align: 'center',
-      },
-    ],
     meetingSize: { value: 0 },
     cassettes: [],
     cassetteHeaders: [
@@ -309,6 +362,44 @@ export default {
         align: 'center',
       },
     ],
+    toiletHeaterHeaders: [
+      {
+        text: 'Heater',
+        value: 'text',
+      },
+      {
+        text: 'Status',
+        align: 'center',
+        value: 'value',
+      },
+      {
+        text: 'Action',
+        value: 'action',
+        align: 'center',
+      },
+    ],
+    toiletExtractFans: [],
+    toiletExtractFanHeaders: [
+      {
+        text: 'Extract Fan',
+        value: 'text',
+      },
+      {
+        text: 'Status',
+        value: 'status',
+        align: 'center',
+      },
+      {
+        text: 'Speed',
+        value: 'speed',
+        align: 'center',
+      },
+      {
+        text: 'Action',
+        value: 'action',
+        align: 'center',
+      },
+    ],
   }),
   computed: {
     sensors() {
@@ -318,6 +409,11 @@ export default {
     },
     condensers() {
       return this.$store.state.variables.filter((v) => v.group === 'condensers')
+    },
+    toiletHeaters() {
+      return this.$store.state.variables.filter(
+        (v) => v.group === 'toiletHeaters'
+      )
     },
   },
   created() {
@@ -350,6 +446,41 @@ export default {
     this.cassettes = this.$store.state.variables.filter(
       (v) => v.group === 'cassettes'
     )
+
+    this.toiletExtractFans = [
+      {
+        text: 'Gents Extract Fan',
+        toggleName: 'toggleExtractGents',
+        statusAdapter: this.$store.state.variables.find(
+          (v) => v.name === 'extractGentsStatusAdapter'
+        ) || { value: 0 },
+        errId: this.$store.state.variables.find(
+          (v) => v.name === 'extractGentsErrId'
+        ) || { value: 0 },
+        actlVelo: this.$store.state.variables.find(
+          (v) => v.name === 'extractGentsActlVelo'
+        ) || { value: 0 },
+        axisStatus: this.$store.state.variables.find(
+          (v) => v.name === 'extractGentsAxisStatus'
+        ) || { value: 0 },
+      },
+      {
+        text: 'Ladies Extract Fan',
+        toggleName: 'toggleExtractLadies',
+        statusAdapter: this.$store.state.variables.find(
+          (v) => v.name === 'extractLadiesStatusAdapter'
+        ) || { value: 0 },
+        errId: this.$store.state.variables.find(
+          (v) => v.name === 'extractLadiesErrId'
+        ) || { value: 0 },
+        actlVelo: this.$store.state.variables.find(
+          (v) => v.name === 'extractLadiesActlVelo'
+        ) || { value: 0 },
+        axisStatus: this.$store.state.variables.find(
+          (v) => v.name === 'extractLadiesAxisStatus'
+        ) || { value: 0 },
+      },
+    ]
   },
   methods: {
     toggleHvacRunning() {
@@ -367,6 +498,20 @@ export default {
         })
       }
     },
+    toggleFans() {
+      this.$store.dispatch('setVariableValue', {
+        name: 'toggleAhuFans',
+        value: true,
+      })
+    },
+    getFanCommand(fan) {
+      if (fan.name.substr(0, 6) === 'supply') {
+        return this.supplyAirCommand
+      } else if (fan.name.substr(0, 6) === 'return') {
+        return this.returnAirCommand
+      }
+      return { value: 0 }
+    },
     getCondenserHours(condenser) {
       const name =
         condenser.name.substr(0, condenser.name.length - 'Status'.length) +
@@ -383,20 +528,6 @@ export default {
         value: index,
       })
     },
-    toggleFans() {
-      this.$store.dispatch('setVariableValue', {
-        name: 'toggleAhuFans',
-        value: true,
-      })
-    },
-    getFanCommand(fan) {
-      if (fan.name.substr(0, 6) === 'supply') {
-        return this.supplyAirCommand
-      } else if (fan.name.substr(0, 6) === 'return') {
-        return this.returnAirCommand
-      }
-      return { value: 0 }
-    },
     changeMeetingSize(value) {
       this.$store.dispatch('setVariableValue', {
         name: 'meetingSize',
@@ -411,6 +542,40 @@ export default {
         's'
       this.$store.dispatch('setVariableValue', { name, value: true })
     },
+    toggleToiletHeater(item) {
+      const name = 'toggle' + item.name[0].toUpperCase() + item.name.substr(1)
+      this.$store.dispatch('setVariableValue', {
+        name,
+        value: true,
+      })
+    },
+    getExtractFanStatus(item) {
+      if (item.statusAdapter.value === 5) {
+        return 'Comms Error'
+      } else if (item.errId.value > 0) {
+        return `Error ${item.errId.value}`
+      } else if ((item.axisStatus.value & 0x40) > 0) {
+        return 'Running'
+      } else if ((item.axisStatus.value & 0x2) > 0) {
+        return 'Stopped'
+      }
+      return 'Unknown'
+    },
+    toggleToiletExtractFan(name) {
+      this.$store.dispatch('setVariableValue', {
+        name,
+        value: true,
+      })
+    },
+    fanItemClass(item) {
+      if (item.value) {
+        return 'orange'
+      } else if (this.getFanCommand(item).value) {
+        return 'green'
+      } else {
+        return 'red'
+      }
+    },
     condenserItemClass(item) {
       if ((item.value & 0x40) > 0) {
         return 'grey' // Disabled
@@ -424,15 +589,6 @@ export default {
         return 'red' // Heating
       }
     },
-    fanItemClass(item) {
-      if (item.value) {
-        return 'orange'
-      } else if (this.getFanCommand(item).value) {
-        return 'green'
-      } else {
-        return 'red'
-      }
-    },
     cassetteItemClass(item) {
       if ((item.value & 0x10) > 0) {
         return 'orange'
@@ -441,6 +597,9 @@ export default {
       } else {
         return 'red'
       }
+    },
+    toiletHeaterItemClass(item) {
+      return item.value ? 'green' : 'red'
     },
   },
   head: {

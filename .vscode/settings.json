@@ -4,10 +4,12 @@
         "nuxt",
         "nuxtjs",
         "postwick",
+        "qrcode",
         "vuelidate",
         "vuetify"
     ],
     "editor.formatOnSave": true,
     "editor.tabSize": 2,
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "python.pythonPath": "C:\\Users\\a.farncombe\\AppData\\Local\\Programs\\Python\\Python39\\python.exe"
 }
