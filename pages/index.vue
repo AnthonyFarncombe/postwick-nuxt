@@ -1,11 +1,25 @@
 <template>
-  <h1 style="text-align: center">Postwick BMS</h1>
+  <div>
+    <h1>
+      {{ numberOfCars.value }}
+      {{ numberOfCars.value === 1 ? 'car' : 'cars' }} in the car park
+    </h1>
+  </div>
 </template>
 
 <script>
 export default {
+  layout: 'hmi',
+  data: () => ({
+    numberOfCars: { value: 0 },
+  }),
+  created() {
+    this.numberOfCars = this.$store.state.variables.find(
+      (v) => v.name === 'numberOfCars'
+    ) || { value: 0 }
+  },
   head: {
-    title: 'Home',
+    title: 'Dashboard',
   },
 }
 </script>

@@ -104,37 +104,37 @@ export default {
         {
           icon: 'mdi-view-dashboard',
           title: 'Dashboard',
-          to: '/hmi',
+          to: '/',
         },
         {
           icon: 'mdi-lightbulb',
           title: 'Lights',
-          to: '/hmi/lights',
+          to: '/lights',
         },
         {
           icon: 'mdi-fan',
           title: 'HVAC',
-          to: '/hmi/hvac',
+          to: '/hvac',
         },
         {
           icon: 'mdi-lock-open',
           title: 'Access',
-          to: '/hmi/access',
+          to: '/access',
         },
         {
           icon: 'mdi-water',
           title: 'Water',
-          to: '/hmi/water',
+          to: '/water',
         },
         {
           icon: 'mdi-calendar-clock',
           title: 'Calendar',
-          to: '/hmi/calendar',
+          to: '/calendar',
         },
         {
           icon: 'mdi-account-multiple',
           title: 'Users',
-          to: '/hmi/users',
+          to: '/users',
           role: 'users',
         },
       ]
