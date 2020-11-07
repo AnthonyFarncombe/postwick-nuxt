@@ -84,10 +84,11 @@ export default {
   watch: {
     dialog(val) {
       if (val) {
+        this.user = null
         this.$axios
           .$get('auth/users')
           .then((users) => (this.users = users))
-          .catch(() => {})
+          .catch(() => (this.users = []))
       }
     },
   },
