@@ -78,7 +78,7 @@
               </v-stepper-content>
 
               <v-stepper-content step="4">
-                <v-card class="mb-12" color="grey darken-3" height="240px">
+                <v-card class="mb-12 pa-6" color="grey darken-3" height="240px">
                   <h4>HMI auth setup complete</h4>
                 </v-card>
 
