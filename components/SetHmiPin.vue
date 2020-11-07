@@ -1,52 +1,93 @@
 <template>
-  <v-dialog v-model="show" max-width="280">
+  <v-dialog v-model="show" max-width="600">
     <v-card>
+      <v-card-title>
+        <span class="headline">Setup HMI Pin</span>
+      </v-card-title>
+
       <v-card-text>
         <v-container>
-          <v-row>
-            <v-col>
-              <v-text-field :value="hmiPin" label="HMI Pin" />
-            </v-col>
-          </v-row>
-          <v-row no-gutters class="my-1">
-            <v-col>
-              <v-btn @click="hmiPin += '7'">7</v-btn>
-              <v-btn @click="hmiPin += '8'">8</v-btn>
-              <v-btn @click="hmiPin += '9'">9</v-btn>
-            </v-col>
-          </v-row>
-          <v-row no-gutters class="my-1">
-            <v-col>
-              <v-btn @click="hmiPin += '4'">4</v-btn>
-              <v-btn @click="hmiPin += '5'">5</v-btn>
-              <v-btn @click="hmiPin += '6'">6</v-btn>
-            </v-col>
-          </v-row>
-          <v-row no-gutters class="my-1">
-            <v-col>
-              <v-btn @click="hmiPin += '1'">1</v-btn>
-              <v-btn @click="hmiPin += '2'">2</v-btn>
-              <v-btn @click="hmiPin += '3'">3</v-btn>
-            </v-col>
-          </v-row>
-          <v-row no-gutters class="my-1">
-            <v-col>
-              <v-btn
-                :disabled="!hmiPin"
-                @click="hmiPin = hmiPin.substr(0, hmiPin.length - 1)"
+          <v-stepper v-model="step">
+            <v-stepper-header>
+              <v-stepper-step :complete="step > 1" step="1"
+                >Start</v-stepper-step
               >
-                <v-icon>mdi-backspace</v-icon>
-              </v-btn>
-              <v-btn @click="hmiPin += '0'">0</v-btn>
-              <v-btn
-                :disabled="hmiPin.length < 4"
-                :loading="loggingIn"
-                @click="submit"
+              <v-divider />
+              <v-stepper-step :complete="step > 2" step="2"
+                >Scan</v-stepper-step
               >
-                <v-icon>mdi-check</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
+              <v-divider />
+              <v-stepper-step :complete="step > 3" step="3"
+                >Confirm</v-stepper-step
+              >
+              <v-divider />
+              <v-stepper-step :complete="step > 4" step="4"
+                >Complete</v-stepper-step
+              >
+            </v-stepper-header>
+
+            <v-stepper-items>
+              <v-stepper-content step="1">
+                <v-card class="mb-12 pa-6" color="grey darken-3" height="240px">
+                  <h4>
+                    To setup the HMI pin you will need the Google Authenticator
+                    app installed on your phone
+                  </h4>
+                </v-card>
+
+                <v-btn color="primary" @click="generateQr">Continue</v-btn>
+                <v-btn text @click="$emit('input', false)">Cancel</v-btn>
+              </v-stepper-content>
+
+              <v-stepper-content step="2">
+                <v-card class="mb-12" color="grey darken-3" height="240px">
+                  <v-container>
+                    <v-row>
+                      <v-col cols="6">
+                        <canvas ref="qrCanvas"></canvas>
+                      </v-col>
+                      <v-col cols="6">
+                        <h4>
+                          Scan the QR code using the Google Authenticator app
+                        </h4>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card>
+
+                <v-btn color="primary" @click="step = 3">Continue</v-btn>
+                <v-btn text @click="$emit('input', false)">Cancel</v-btn>
+              </v-stepper-content>
+
+              <v-stepper-content step="3">
+                <v-card class="mb-12 pa-6" color="grey darken-3" height="240px">
+                  <v-text-field
+                    v-model="hmiPin"
+                    label="Enter the pin from the app"
+                  />
+                </v-card>
+
+                <v-btn
+                  color="primary"
+                  :disabled="hmiPin.length < 6"
+                  @click="verifyPin"
+                >
+                  Continue
+                </v-btn>
+                <v-btn text @click="$emit('input', false)">Cancel</v-btn>
+              </v-stepper-content>
+
+              <v-stepper-content step="4">
+                <v-card class="mb-12" color="grey darken-3" height="240px">
+                  <h4>HMI auth setup complete</h4>
+                </v-card>
+
+                <v-btn color="primary" @click="$emit('input', false)"
+                  >Complete</v-btn
+                >
+              </v-stepper-content>
+            </v-stepper-items>
+          </v-stepper>
         </v-container>
       </v-card-text>
     </v-card>
@@ -54,11 +95,14 @@
 </template>
 
 <script>
+import qrcode from 'qrcode'
+
 export default {
   props: {
     value: Boolean,
   },
   data: () => ({
+    step: 1,
     hmiPin: '',
     loggingIn: false,
   }),
@@ -73,7 +117,28 @@ export default {
       },
     },
   },
+  watch: {
+    value(val) {
+      if (val) this.step = 1
+    },
+  },
   methods: {
+    async generateQr() {
+      this.step = 2
+      const { secret } = await this.$axios.$post('auth/setuphmipin')
+      qrcode.toCanvas(this.$refs.qrCanvas, secret)
+    },
+    async verifyPin() {
+      try {
+        await this.$axios.$post('auth/verifyhmipin', {
+          token: this.hmiPin,
+          confirm: true,
+        })
+        this.step = 4
+      } catch (err) {
+        this.step = 2
+      }
+    },
     numberClick(num) {
       this.hmiPin += num
     },
