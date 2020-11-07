@@ -136,7 +136,7 @@ export default {
         })
         this.step = 4
       } catch (err) {
-        this.step = 2
+        await this.generateQr()
       }
     },
     numberClick(num) {
