@@ -81,10 +81,15 @@ export default {
     password: '',
     loggingIn: false,
   }),
-  async created() {
-    try {
-      this.users = await this.$axios.$get('auth/users')
-    } catch (err) {}
+  watch: {
+    dialog(val) {
+      if (val) {
+        this.$axios
+          .$get('auth/users')
+          .then((users) => (this.users = users))
+          .catch(() => {})
+      }
+    },
   },
   methods: {
     numberClick(num) {
