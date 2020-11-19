@@ -108,6 +108,20 @@
                     ></v-switch>
                   </v-col>
                 </v-row>
+
+                <v-row>
+                  <v-col cols="12">
+                    <pre>{{ editedSchedule.meetingSize }}</pre>
+                    <v-select
+                      v-model="editedSchedule.meetingSize"
+                      :items="meetingSizes"
+                      item-text="text"
+                      item-value="value"
+                      label="Meeting Size"
+                      :error="errors.meetingSize"
+                    />
+                  </v-col>
+                </v-row>
               </v-container>
             </v-card-text>
 
@@ -123,14 +137,21 @@
         </v-dialog>
       </v-toolbar>
     </template>
+
     <template v-slot:[`item.frequency`]="{ value }">
       {{ frequencyOptions.find((o) => o.value === value).text }}
     </template>
+
     <template v-slot:[`item.nextDate`]="{ value }">
       {{ formatDate(value) }}
     </template>
+
     <template v-slot:[`item.overrideDay`]="{ value }">
       {{ value ? 'Yes' : 'No' }}
+    </template>
+
+    <template v-slot:[`item.meetingSize`]="{ value }">
+      {{ meetingSizeToString(value) }}
     </template>
   </v-data-table>
 </template>
@@ -146,22 +167,32 @@ export default {
       {
         text: 'Day of Week',
         value: 'dayOfWeek',
+        align: 'center',
       },
       {
         text: 'Time of Meeting',
         value: 'timeOfMeeting',
+        align: 'center',
       },
       {
         text: 'Frequency',
         value: 'frequency',
+        align: 'center',
       },
       {
         text: 'Next Date',
         value: 'nextDate',
+        align: 'center',
       },
       {
         text: 'Override Day',
         value: 'overrideDay',
+        align: 'center',
+      },
+      {
+        text: 'Meeting Size',
+        value: 'meetingSize',
+        align: 'center',
       },
     ],
     editedIndex: -1,
@@ -177,6 +208,28 @@ export default {
       'Saturday',
     ],
     timeOfMeetingMenuModel: false,
+    meetingSizes: [
+      {
+        text: 'Maintenance (empty hall)',
+        value: 0,
+      },
+      {
+        text: 'Local (up to 50 people)',
+        value: 50,
+      },
+      {
+        text: 'City (up to 250 people)',
+        value: 250,
+      },
+      {
+        text: 'Interchange (up to 600 people)',
+        value: 600,
+      },
+      {
+        text: 'Special (full hall)',
+        value: 2000,
+      },
+    ],
   }),
   computed: {
     schedules() {
@@ -300,6 +353,7 @@ export default {
         nextDate:
           !this.editedSchedule.nextDate &&
           ['0', '2', '3'].includes(this.editedSchedule.frequency),
+        meetingSize: !this.editedSchedule.meetingSize,
       }
     },
     formInvalid() {
@@ -307,7 +361,8 @@ export default {
         this.errors.dayOfWeek ||
         this.errors.timeOfMeeting ||
         this.errors.frequency ||
-        this.errors.nextDate
+        this.errors.nextDate ||
+        this.errors.meetingSize
       )
     },
   },
@@ -326,6 +381,10 @@ export default {
   methods: {
     formatDate(value) {
       return value && dayjs(value).format('DD MMMM YYYY')
+    },
+    meetingSizeToString(value) {
+      const meetingSize = this.meetingSizes.find((s) => s.value === value)
+      return (meetingSize && meetingSize.text) || 'Unknown'
     },
     editSchedule(schedule) {
       this.editedSchedule = Object.assign({}, schedule)
