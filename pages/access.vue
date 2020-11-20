@@ -52,9 +52,7 @@
                 </td>
                 <td class="text-right">
                   <v-btn
-                    v-if="
-                      !doorSystemEnabled.value && !securityAlarmEnabled.value
-                    "
+                    v-if="!doorSystemEnabled.value"
                     @click="toggleGateHold"
                     >{{
                       gateHeldOpen.value ? 'Release Hold' : 'Hold Open'
