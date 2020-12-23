@@ -152,7 +152,9 @@
         >
           <template v-slot:[`item.command`]="{ item }">
             {{
-              (item.value & 0x4) === 0
+              (item.value & 0x40) > 0
+                ? 'Disabled'
+                : (item.value & 0x4) === 0
                 ? 'Off'
                 : condenserHeatingEnable.value
                 ? 'Heat'
@@ -580,13 +582,15 @@ export default {
       if ((item.value & 0x40) > 0) {
         return 'grey' // Disabled
       } else if ((item.value & 0x10) > 0) {
-        return 'orange' // Fault
+        return 'yellow darken-1' // Fault
       } else if ((item.value & 0x20) > 0) {
         return 'purple' // Defrost
-      } else if ((item.value & 0x8) > 0) {
-        return 'blue' // Cooling
+      } else if ((item.value & 0x8) === 0) {
+        return 'red' // Off
+      } else if (this.condenserHeatingEnable.value) {
+        return 'orange' // Heating
       } else {
-        return 'red' // Heating
+        return 'blue' // Cooling
       }
     },
     cassetteItemClass(item) {
