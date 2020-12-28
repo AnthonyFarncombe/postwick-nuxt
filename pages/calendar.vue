@@ -111,7 +111,6 @@
 
                 <v-row>
                   <v-col cols="12">
-                    <pre>{{ editedSchedule.meetingSize }}</pre>
                     <v-select
                       v-model="editedSchedule.meetingSize"
                       :items="meetingSizes"
@@ -226,7 +225,7 @@ export default {
         value: 600,
       },
       {
-        text: 'Special (full hall)',
+        text: 'Full (max capacity)',
         value: 2000,
       },
     ],
