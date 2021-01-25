@@ -88,16 +88,17 @@ import { required, email } from 'vuelidate/lib/validators'
 
 export default {
   layout: 'hmi',
-  asyncData({ $axios }) {
-    return Promise.all([
+  async asyncData({ $axios }) {
+    const results = await Promise.all([
       $axios.$get('users/roles'),
       $axios.$get('users/notifications'),
       $axios.$get('users'),
-    ]).then((results) => ({
+    ])
+    return {
       roles: results[0],
       notifications: results[1],
       users: results[2],
-    }))
+    }
   },
   data: () => ({
     headers: [

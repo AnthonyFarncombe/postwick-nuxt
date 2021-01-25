@@ -75,10 +75,19 @@ export default {
       return errors
     },
     passwordErrors() {
-      const errors = []
-      if (!this.$v.password.$dirty) return errors
-      !this.$v.password.required && errors.push('Enter a valid password')
-      return errors
+      if (!this.$v.password.$dirty) return []
+      if (!this.$v.password.required) return ['Enter a valid password']
+
+      if (this.password.length < 8)
+        return ['Password must be at least eight characters long']
+
+      const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/
+      if (!strongRegex.test(this.password || ''))
+        return [
+          'Password must contain uppercase, lowercase, numbers and symbols',
+        ]
+
+      return []
     },
     confirmPasswordErrors() {
       const errors = []

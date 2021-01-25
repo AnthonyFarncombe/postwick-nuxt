@@ -122,6 +122,12 @@ export default {
           to: '/access',
         },
         {
+          icon: 'mdi-cctv',
+          title: 'ANPR',
+          to: '/anpr',
+          role: 'anpr',
+        },
+        {
           icon: 'mdi-water',
           title: 'Water',
           to: '/water',
@@ -138,6 +144,7 @@ export default {
           role: 'users',
         },
       ]
+
       return pages.filter(
         (i) =>
           !i.role ||
@@ -165,7 +172,7 @@ export default {
         .dispatch('loadAuthUser')
         .then((authUser) => {
           const page = this.pages.find((p) => p.to === this.$route.fullPath)
-          if (!page) this.$router.push('/hmi')
+          if (!page) this.$router.push('/')
         })
         .catch(() => {
           this.$router.push(
