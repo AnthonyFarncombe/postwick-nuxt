@@ -197,7 +197,7 @@ export default {
     async save() {
       if (this.editedIndex > -1) {
         await this.$axios.$put(`users/${this.editedUser.id}`, this.editedUser)
-        Object.assign(this.users[this.editedIndex], this.editedUser)
+        this.$set(this.users, this.editedIndex, this.editedUser)
       } else {
         const user = await this.$axios.$post('users', this.editedUser)
         this.users.push(user)

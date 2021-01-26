@@ -10,7 +10,7 @@
       <v-tab-item>
         <v-data-table
           :headers="carHeaders"
-          :items="cars"
+          :items="carsMapped"
           disable-pagination
           hide-default-footer
           class="elevation-1"
@@ -36,11 +36,18 @@
                         <v-flex xs12>
                           <v-text-field
                             v-model="editedCar.plateText"
+                            :error-messages="plateTextErrors"
                             label="Plate Text"
                           />
                         </v-flex>
                         <v-flex xs12>
                           <v-text-field v-model="editedCar.name" label="Name" />
+                        </v-flex>
+                        <v-flex xs12>
+                          <v-text-field
+                            v-model="editedCar.vehicleType"
+                            label="Vehicle Type"
+                          />
                         </v-flex>
                       </v-layout>
                     </v-container>
@@ -51,7 +58,7 @@
                       >Delete</v-btn
                     >
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" @click="carModal = false"
+                    <v-btn color="blue darken-1" @click="carDialog = false"
                       >Cancel</v-btn
                     >
                     <v-btn
@@ -66,14 +73,13 @@
             </v-toolbar>
           </template>
 
-          <template v-slot:[`item.lastVisit`]="{ value }">
-            {{ formatDate(value, 'DD MMMM YYYY') }}
+          <template v-slot:[`item.plateText`]="{ value }">
+            {{ formatPlateText(value) }}
           </template>
 
           <template v-slot:[`item.action`]="{ item }">
             <v-btn small @click="viewVisits(item)">Visits</v-btn>
             <v-btn small @click="editCar(item)">Edit</v-btn>
-            <v-btn small @click="deleteCar(item)">Delete</v-btn>
           </template>
         </v-data-table>
       </v-tab-item>
@@ -105,9 +111,7 @@
                 <span
                   >{{ formatDate(visit.timestamp, 'DD/MM/YYYY HH:mm') }}
                 </span>
-                <span v-if="visit.plateText"
-                  >&nbsp;- {{ visit.plateText }}</span
-                >
+                <span>&nbsp;- {{ getCarName(visit) }}</span>
               </v-card-title>
 
               <v-card-text>
@@ -138,11 +142,10 @@
           <span
             >{{ formatDate(selectedVisit.timestamp, 'DD/MM/YYYY HH:mm') }}
           </span>
-          <span v-if="selectedVisit.name"
-            >&nbsp;- {{ selectedVisit.name }}</span
-          >
-          <span v-else-if="selectedVisit.plateText"
-            >&nbsp;- {{ selectedVisit.plateText }}</span
+          <span
+            >&nbsp;- {{ getCarName(selectedVisit) }} ({{
+              selectedVisit.plateText
+            }})</span
           >
         </v-card-title>
         <v-card-text>
@@ -222,16 +225,18 @@ export default {
         value: 'name',
       },
       {
-        text: 'Visits',
-        value: 'visits',
+        text: 'Vehicle Type',
+        value: 'vehicleType',
       },
       {
-        text: 'Last Visit',
-        value: 'lastVisit',
+        text: 'Num Visits',
+        value: 'numVisits',
+        align: 'center',
       },
       {
         text: 'Action',
         value: 'action',
+        align: 'center',
       },
     ],
     visitSearch: '',
@@ -244,8 +249,24 @@ export default {
         ? 'http://localhost:3011'
         : ''
     },
+    carsMapped() {
+      return (this.cars || []).map((c) => ({
+        ...c,
+        numVisits: this.visits.filter((v) => v.plateText === c.plateText)
+          .length,
+        lastVisit: null,
+      }))
+    },
+    plateTextErrors() {
+      if (
+        !this.editedCar.plateText ||
+        !/^[A-z]{2}\d{2}\s?[A-z]{3}$/.test(this.editedCar.plateText || '')
+      )
+        return ['Invalid plate text']
+      return []
+    },
     carFormInvalid() {
-      return false
+      return this.plateTextErrors.length > 0
     },
     visitsFiltered() {
       if (!this.visitSearch) return this.visits
@@ -257,9 +278,21 @@ export default {
       )
     },
   },
+  watch: {
+    carDialog(val) {
+      if (!val) {
+        setTimeout(() => (this.editedCar = {}), 300)
+      }
+    },
+  },
   methods: {
     formatDate(value, format) {
       return value && dayjs(value).format(format)
+    },
+    formatPlateText(value) {
+      if (/^[A-z]{2}\d{2}[A-z]{3}$/.test((value || '').toUpperCase()))
+        return `${value.substr(0, 4)} ${value.substr(4, 3)}`
+      else return value
     },
     getImagePath(visit, cropped) {
       if (!cropped && visit.imageNameOrig) {
@@ -275,11 +308,34 @@ export default {
       this.editedCar = Object.assign({}, car)
       this.carDialog = true
     },
-    saveCar() {
-      //
+    async saveCar() {
+      try {
+        if (this.editedCar.id) {
+          const index = this.cars.findIndex((c) => c.id === this.editedCar.id)
+          const savedCar = await this.$axios.$put(
+            `anpr/car/${this.editedCar.id}`,
+            this.editedCar
+          )
+          this.$set(this.cars, index, savedCar)
+        } else {
+          const car = await this.$axios.$post(`anpr/car`, this.editedCar)
+          this.cars.push(car)
+        }
+
+        this.carDialog = false
+      } catch (err) {
+        alert('Failed to save car!')
+      }
     },
-    deleteCar() {
-      //
+    async deleteCar() {
+      try {
+        await this.$axios.$delete(`anpr/car/${this.editedCar.id}`)
+        const index = this.cars.findIndex((c) => c.id === this.editedCar.id)
+        this.cars.splice(index, 1)
+        this.carDialog = false
+      } catch (err) {
+        alert('Unable to delete car!')
+      }
     },
     viewVisits(car) {
       this.tab = 1
@@ -288,6 +344,12 @@ export default {
     openVisit(visit) {
       this.selectedVisit = visit
       this.visitDialog = true
+    },
+    getCarName(visit) {
+      const car = (this.cars || []).find((c) => c.plateText === visit.plateText)
+      if (car && car.name) return car.name
+      if (visit.name) return visit.name
+      return visit.plateText || 'INVALID'
     },
   },
   head: {
