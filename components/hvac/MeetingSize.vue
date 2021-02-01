@@ -12,7 +12,6 @@
       class="ml-4"
       @change="changeMeetingSize"
     >
-      <!-- <v-radio label="Manual" :value="0" class="my-2" /> -->
       <v-radio label="Auto (set by schedule)" :value="0" class="my-2" />
       <v-radio label="Maintenance (empty hall)" :value="1" class="my-2" />
       <v-radio label="Local (up to 50 people)" :value="2" class="my-2" />
