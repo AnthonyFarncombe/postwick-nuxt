@@ -210,23 +210,23 @@ export default {
     meetingSizes: [
       {
         text: 'Maintenance (empty hall)',
-        value: 0,
+        value: 1,
       },
       {
         text: 'Local (up to 50 people)',
-        value: 50,
+        value: 2,
       },
       {
         text: 'City (up to 250 people)',
-        value: 250,
+        value: 3,
       },
       {
         text: 'Interchange (up to 600 people)',
-        value: 600,
+        value: 4,
       },
       {
         text: 'Full (max capacity)',
-        value: 2000,
+        value: 5,
       },
     ],
   }),
